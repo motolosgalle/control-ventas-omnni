@@ -1,147 +1,180 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Omni Sales Manager</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { background:#f7f8fb; }
-    .card-soft { border:none; border-radius:20px; box-shadow:0 4px 18px rgba(0,0,0,.06); }
-    .local-btn.active { font-weight:700; }
-    canvas { max-height:300px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omni Sales Manager M3</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--aldrey:#f57c00;--gallegos:#0288d1;}
+body{font-family:Roboto,sans-serif;background:#f5f6fb}
+h1,h2,h3,.nav-link{font-family:'Google Sans',sans-serif}
+.card-m3{background:white;border:none;border-radius:28px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.month-chip{border:none;padding:8px 14px;border-radius:18px;background:#e9edf5;margin-right:8px}
+.month-chip.active{background:#111;color:white}
+</style>
 </head>
 <body>
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h1 class="h3 mb-1">Omni Sales Manager</h1>
-      <small class="text-muted">Control de Aldrey y Gallegos</small>
-    </div>
-    <div class="btn-group">
-      <button class="btn btn-outline-dark local-btn" onclick="setLocal('aldrey')">Aldrey</button>
-      <button class="btn btn-outline-dark local-btn" onclick="setLocal('gallegos')">Gallegos</button>
-    </div>
-  </div>
+<div class="container-fluid p-4">
 
-  <div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="card card-soft p-3"><small>Facturación</small><h3 id="kpiMoney">$0</h3></div></div>
-    <div class="col-md-4"><div class="card card-soft p-3"><small>Unidades</small><h3 id="kpiUnits">0</h3></div></div>
-    <div class="col-md-4"><div class="card card-soft p-3"><small>Ticket promedio</small><h3 id="kpiTicket">$0</h3></div></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-0">Omni Sales Manager</h2>
+    <small id="statusBar"></small>
   </div>
-
-  <div class="card card-soft p-3 mb-4">
-    <h5>Nueva venta</h5>
-    <div class="row g-2">
-      <div class="col-md-2"><input id="fDate" type="date" class="form-control"></div>
-      <div class="col-md-2"><input id="fVendor" placeholder="Vendedor" class="form-control"></div>
-      <div class="col-md-2"><input id="fAmount" placeholder="Monto" type="number" class="form-control"></div>
-      <div class="col-md-2"><input id="fUnits" placeholder="Unidades" type="number" class="form-control"></div>
-      <div class="col-md-2"><input id="fClients" placeholder="Clientes" type="number" class="form-control"></div>
-      <div class="col-md-2"><button class="btn btn-dark w-100" onclick="addSale()">Guardar</button></div>
-    </div>
+  <div class="btn-group">
+    <button class="btn btn-outline-dark" onclick="changeLocal('aldrey')">Aldrey</button>
+    <button class="btn btn-outline-dark" onclick="changeLocal('gallegos')">Gallegos</button>
   </div>
+</div>
 
-  <div class="row g-4">
-    <div class="col-lg-7">
-      <div class="card card-soft p-3">
-        <table class="table" id="salesTable">
-          <thead><tr><th>Fecha</th><th>Vendedor</th><th>Monto</th><th>Unid.</th><th></th></tr></thead>
-          <tbody></tbody>
-        </table>
+<div id="months" class="mb-4"></div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card-m3 p-3"><small>Facturación</small><h3 id="kpiMoney">$0</h3></div></div>
+  <div class="col-md-4"><div class="card-m3 p-3"><small>Unidades</small><h3 id="kpiUnits">0</h3></div></div>
+  <div class="col-md-4"><div class="card-m3 p-3"><small>Ticket Promedio</small><h3 id="kpiTicket">$0</h3></div></div>
+</div>
+
+<div class="card-m3 p-3 mb-4">
+<h5>Carga del día</h5>
+<div class="row g-2 mb-2">
+  <div class="col-md-2"><input id="fDate" type="date" class="form-control" required></div>
+  <div class="col-md-2"><select id="fVendor" class="form-select"></select></div>
+  <div class="col-md-2"><input id="fAmount" type="number" placeholder="Monto" class="form-control"></div>
+  <div class="col-md-2"><input id="fUnits" type="number" placeholder="Unidades" class="form-control"></div>
+  <div class="col-md-2"><input id="fClients" type="number" placeholder="Clientes" class="form-control"></div>
+  <div class="col-md-2"><button class="btn btn-dark w-100" onclick="addSale()">Venta vendedor</button></div>
+</div>
+<div class="row g-2">
+  <div class="col-md-3"><input id="cCash" type="number" placeholder="Efectivo" class="form-control"></div>
+  <div class="col-md-3"><input id="cCards" type="number" placeholder="Tarjetas" class="form-control"></div>
+  <div class="col-md-3"><input id="cMP" type="number" placeholder="Mercado Pago" class="form-control"></div>
+  <div class="col-md-3"><button class="btn btn-outline-dark w-100" onclick="saveClosure()">Caja del local</button></div>
+</div>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="tabs">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabTotal">Total Local</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabDaily">Estadística Diaria</button></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="tabTotal">
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="card-m3 p-3">
+          <table class="table">
+            <thead><tr><th>Fecha</th><th>Vendedor</th><th>Monto</th><th>Unidades</th><th></th></tr></thead>
+            <tbody id="salesBody"></tbody>
+          </table>
+        </div>
       </div>
+      <div class="col-lg-4"><div class="card-m3 p-3"><canvas id="chartMain"></canvas></div></div>
     </div>
-    <div class="col-lg-5">
-      <div class="card card-soft p-3">
-        <canvas id="salesChart"></canvas>
-      </div>
+  </div>
+  <div class="tab-pane fade" id="tabDaily">
+    <div class="card-m3 p-3" id="dailyBox"></div>
+  </div>
+  <div class="tab-pane fade" id="tabSeller">
+    <div class="card-m3 p-3">
+      <h4 id="sellerTitle"></h4>
+      <div id="sellerMetrics"></div>
+      <canvas id="sellerChart"></canvas>
     </div>
   </div>
 </div>
 
-<script>
-const DB_KEY = 'omni_sales_v2';
-const state = {
-  local: localStorage.getItem('lastLocal') || 'aldrey',
-  db: JSON.parse(localStorage.getItem(DB_KEY)) || { sales: [] },
-  chart: null
-};
+</div>
 
-function saveDB(){
-  localStorage.setItem(DB_KEY, JSON.stringify(state.db));
-  localStorage.setItem('lastLocal', state.local);
+<script>
+const staff={aldrey:['Juan Ignacio','German','Martina'],gallegos:['Lucas','German','Helena']};
+const months=['Enero','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const state={local:'aldrey',month:new Date().getMonth(),db:JSON.parse(localStorage.getItem('omni_pro'))||{sales:[],closures:[]},mainChart:null,sellerChart:null};
+
+function saveDB(){localStorage.setItem('omni_pro',JSON.stringify(state.db))}
+
+function changeLocal(local){state.local=local; resetSellerTabs(); render();}
+function changeMonth(m){state.month=m; resetSellerTabs(); render();}
+
+function resetSellerTabs(){document.querySelectorAll('.seller-tab').forEach(x=>x.remove())}
+
+function buildMonths(){
+document.getElementById('months').innerHTML=months.map((m,i)=>`<button class="month-chip ${i===state.month?'active':''}" onclick="changeMonth(${i})">${m}</button>`).join('')
 }
 
-function setLocal(local){
-  state.local = local;
-  saveDB();
-  render();
+function buildSellerTabs(){
+resetSellerTabs();
+const tabs=document.getElementById('tabs');
+staff[state.local].forEach(name=>{
+const li=document.createElement('li');
+li.className='nav-item seller-tab';
+li.innerHTML=`<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSeller" onclick="renderSeller('${name}')">${name}</button>`;
+tabs.appendChild(li);
+});
+document.getElementById('fVendor').innerHTML=staff[state.local].map(v=>`<option>${v}</option>`).join('')
 }
 
 function addSale(){
-  state.db.sales.push({
-    id: Date.now(),
-    local: state.local,
-    date: document.getElementById('fDate').value,
-    vendor: document.getElementById('fVendor').value,
-    amount: Number(document.getElementById('fAmount').value || 0),
-    units: Number(document.getElementById('fUnits').value || 0),
-    clients: Number(document.getElementById('fClients').value || 1)
-  });
-  saveDB();
-  render();
+state.db.sales.push({
+id:Date.now(),local:state.local,month:state.month,
+date:fDate.value,vendor:fVendor.value,
+amount:+fAmount.value||0,units:+fUnits.value||0,clients:+fClients.value||1
+});
+saveDB(); render();
 }
 
-function removeSale(id){
-  state.db.sales = state.db.sales.filter(x => x.id !== id);
-  saveDB();
-  render();
+function saveClosure(){
+state.db.closures=state.db.closures.filter(x=>!(x.local===state.local && x.month===state.month && x.date===fDate.value));
+state.db.closures.push({
+local:state.local,month:state.month,date:fDate.value,
+total:(+cCash.value||0)+(+cCards.value||0)+(+cMP.value||0)
+});
+saveDB(); render();
 }
+
+function removeSale(id){state.db.sales=state.db.sales.filter(x=>x.id!==id); saveDB(); render();}
 
 function render(){
-  document.querySelectorAll('.local-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent.toLowerCase() === state.local);
-  });
+buildMonths(); buildSellerTabs();
+document.getElementById('statusBar').textContent=`Operando: ${state.local.toUpperCase()} · ${months[state.month]}`;
+const sales=state.db.sales.filter(x=>x.local===state.local && x.month===state.month);
+const closures=state.db.closures.filter(x=>x.local===state.local && x.month===state.month);
 
-  const sales = state.db.sales.filter(x => x.local === state.local);
+const money=sales.reduce((a,b)=>a+b.amount,0);
+const units=sales.reduce((a,b)=>a+b.units,0);
+const clients=sales.reduce((a,b)=>a+b.clients,0);
 
-  const money = sales.reduce((a,b) => a + b.amount, 0);
-  const units = sales.reduce((a,b) => a + b.units, 0);
-  const clients = sales.reduce((a,b) => a + b.clients, 0);
+kpiMoney.textContent='$'+money.toLocaleString();
+kpiUnits.textContent=units;
+kpiTicket.textContent='$'+(clients?Math.round(money/clients):0).toLocaleString();
 
-  document.getElementById('kpiMoney').textContent = '$' + money.toLocaleString();
-  document.getElementById('kpiUnits').textContent = units;
-  document.getElementById('kpiTicket').textContent = '$' + (clients ? Math.round(money/clients) : 0).toLocaleString();
+salesBody.innerHTML=sales.map(s=>`<tr><td>${s.date}</td><td>${s.vendor}</td><td>$${s.amount.toLocaleString()}</td><td>${s.units}</td><td><button class='btn btn-sm btn-danger' onclick='removeSale(${s.id})'>X</button></td></tr>`).join('');
 
-  document.querySelector('#salesTable tbody').innerHTML = sales.slice().reverse().map(s => `
-    <tr>
-      <td>${s.date}</td>
-      <td>${s.vendor}</td>
-      <td>$${s.amount.toLocaleString()}</td>
-      <td>${s.units}</td>
-      <td><button class="btn btn-sm btn-outline-danger" onclick="removeSale(${s.id})">X</button></td>
-    </tr>
-  `).join('');
+const daily={};
+sales.forEach(s=>{
+if(!daily[s.date]) daily[s.date]={money:0,units:0};
+daily[s.date].money+=s.amount; daily[s.date].units+=s.units;
+});
+closures.forEach(c=>{if(!daily[c.date]) daily[c.date]={money:0,units:0}; daily[c.date].closure=c.total;});
 
-  const vendorMap = {};
-  sales.forEach(s => vendorMap[s.vendor] = (vendorMap[s.vendor] || 0) + s.amount);
+dailyBox.innerHTML=Object.keys(daily).map(d=>`<div class='border-bottom py-2'>${d} | Venta $${daily[d].money.toLocaleString()} | Caja $${(daily[d].closure||0).toLocaleString()}</div>`).join('');
+}
 
-  const ctx = document.getElementById('salesChart');
-  if(state.chart) state.chart.destroy();
+function renderSeller(name){
+const sales=state.db.sales.filter(x=>x.local===state.local && x.month===state.month && x.vendor===name);
+const money=sales.reduce((a,b)=>a+b.amount,0);
+const units=sales.reduce((a,b)=>a+b.units,0);
+const clients=sales.reduce((a,b)=>a+b.clients,0);
 
-  state.chart = new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels:Object.keys(vendorMap),
-      datasets:[{ data:Object.values(vendorMap) }]
-    },
-    options:{ plugins:{ legend:{ display:false } } }
-  });
+sellerTitle.textContent=name;
+sellerMetrics.innerHTML=`Facturado: $${money.toLocaleString()} | Unidades: ${units} | Ticket: $${clients?Math.round(money/clients):0}`;
 }
 
 render();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
