@@ -1,226 +1,520 @@
-import React, { useMemo, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { BarChart3, Target, TrendingUp, Users } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+<title>Omni Sales Manager</title>
 
-const STORES = {
-  aldrey: {
-    name: "Paseo Aldrey",
-    accent: "orange",
-    sellers: ["German", "Juan Ignacio", "Martina"],
-    color: "bg-orange-500",
-    light: "bg-orange-50",
-  },
-  gallegos: {
-    name: "Los Gallegos",
-    accent: "sky",
-    sellers: ["Lucas", "Helena", "German"],
-    color: "bg-sky-500",
-    light: "bg-sky-50",
-  },
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+    --aldrey:#f57c00;
+    --gallegos:#0288d1;
+}
+
+body{
+    background:#f6f7fb;
+    font-family:Arial,sans-serif;
+}
+
+.app-card{
+    background:white;
+    border-radius:28px;
+    padding:24px;
+    box-shadow:0 4px 20px rgba(0,0,0,.06);
+}
+
+.month-btn{
+    border:none;
+    border-radius:20px;
+    padding:8px 18px;
+    background:white;
+    cursor:pointer;
+}
+
+.month-btn.active{
+    background:black;
+    color:white;
+}
+
+.seller-box{
+    border-radius:20px;
+    padding:14px;
+    margin-bottom:12px;
+}
+
+.kpi{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.small-label{
+    font-size:12px;
+    opacity:.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container-fluid p-4">
+
+    <!-- HEADER -->
+    <div class="app-card mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <h2 class="mb-0">Omni Sales</h2>
+                <small id="headerInfo"></small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button onclick="changeStore('aldrey')" class="btn btn-warning">
+                    Paseo Aldrey
+                </button>
+
+                <button onclick="changeStore('gallegos')" class="btn btn-info text-white">
+                    Los Gallegos
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- MONTHS -->
+    <div id="monthBar" class="d-flex gap-2 mb-4 flex-wrap"></div>
+
+
+    <!-- KPI -->
+    <div class="row mb-4">
+
+        <div class="col-md-4 mb-3">
+            <div class="app-card">
+                <div class="small-label">FACTURACIÓN</div>
+                <div class="kpi" id="kpiRevenue">$0</div>
+                <small id="goalRevenue"></small>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="app-card">
+                <div class="small-label">CELULARES</div>
+                <div class="kpi" id="kpiPhones">0</div>
+                <small id="goalPhones"></small>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="app-card">
+                <div class="small-label">UNIDADES</div>
+                <div class="kpi" id="kpiUnits">0</div>
+                <small id="goalUnits"></small>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-4" id="mainTabs">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dailyTab">
+                Diario
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#monthlyTab">
+                Mensual
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#goalsTab">
+                Objetivos
+            </button>
+        </li>
+    </ul>
+
+
+    <div class="tab-content">
+
+        <!-- DAILY -->
+        <div class="tab-pane fade show active" id="dailyTab">
+
+            <div class="app-card mb-4">
+
+                <h4>Carga del día</h4>
+
+                <div class="row mb-4">
+
+                    <div class="col-md-3">
+                        <input id="saleDate" type="date" class="form-control">
+                    </div>
+
+                    <div class="col-md-3">
+                        <input id="cash" type="number" placeholder="Efectivo" class="form-control">
+                    </div>
+
+                    <div class="col-md-3">
+                        <input id="cards" type="number" placeholder="Tarjetas" class="form-control">
+                    </div>
+
+                    <div class="col-md-3">
+                        <input id="mp" type="number" placeholder="Mercado Pago" class="form-control">
+                    </div>
+
+                </div>
+
+                <div id="sellerInputs"></div>
+
+                <button onclick="saveDay()" class="btn btn-dark mt-3">
+                    Guardar día
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- MONTHLY -->
+        <div class="tab-pane fade" id="monthlyTab">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-4">
+                    <div class="app-card">
+                        <h5>Mix de productos</h5>
+                        <canvas id="productChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="app-card">
+                        <h5>Ranking vendedores</h5>
+                        <div id="sellerRanking"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- GOALS -->
+        <div class="tab-pane fade" id="goalsTab">
+
+            <div class="app-card">
+
+                <h4>Objetivos del mes</h4>
+
+                <div class="row">
+
+                    <div class="col-md-4">
+                        <input id="goalM" type="number" placeholder="Meta $" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <input id="goalC" type="number" placeholder="Meta celulares" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <input id="goalU" type="number" placeholder="Meta unidades" class="form-control">
+                    </div>
+
+                </div>
+
+                <button onclick="saveGoals()" class="btn btn-dark mt-3">
+                    Guardar objetivos
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+const STAFF = {
+    aldrey:["German","Juan Ignacio","Martina"],
+    gallegos:["Lucas","Helena","German"]
 };
 
-const mockSales = [
-  { day: 1, revenue: 950000 },
-  { day: 2, revenue: 1200000 },
-  { day: 3, revenue: 820000 },
-  { day: 4, revenue: 1550000 },
-  { day: 5, revenue: 1100000 },
+const MONTHS = [
+    "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
 ];
 
-const productMix = [
-  { name: "Cel", value: 48 },
-  { name: "Acc", value: 124 },
-  { name: "Hydro", value: 62 },
-];
+let currentStore = "aldrey";
+let currentMonth = new Date().getMonth();
 
-export default function OmniSalesDashboard() {
-  const [storeKey, setStoreKey] = useState("aldrey");
-  const [month, setMonth] = useState(new Date().getMonth());
+let DB = JSON.parse(localStorage.getItem("omniDB")) || {
+    sales:[],
+    goals:{}
+};
 
-  const store = STORES[storeKey];
+let productChart;
 
-  const metrics = useMemo(() => ({
-    objectiveRevenue: 85000000,
-    currentRevenue: 39638398,
-    objectivePhones: 110,
-    currentPhones: 48,
-    objectiveUnits: 225,
-    currentUnits: 124,
-    tickets: 96,
-  }), [storeKey, month]);
 
-  const revenueProgress = Math.round((metrics.currentRevenue / metrics.objectiveRevenue) * 100);
-  const phoneProgress = Math.round((metrics.currentPhones / metrics.objectivePhones) * 100);
-  const unitsProgress = Math.round((metrics.currentUnits / metrics.objectiveUnits) * 100);
-
-  return (
-    <div className="min-h-screen bg-slate-100 p-4">
-      <div className="max-w-7xl mx-auto space-y-5">
-
-        <Card className="rounded-3xl border-0 shadow-sm">
-          <CardContent className="p-6 flex justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">Omni Sales Intelligence</h1>
-              <p className="text-slate-500">{store.name} · {MONTHS[month]}</p>
-            </div>
-
-            <div className="flex gap-2 flex-wrap">
-              {Object.entries(STORES).map(([key, item]) => (
-                <Button key={key} onClick={() => setStoreKey(key)} variant={storeKey === key ? "default" : "outline"}>
-                  {item.name}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex gap-2 overflow-auto pb-2">
-          {MONTHS.map((m, i) => (
-            <Button key={m} variant={month === i ? "default" : "outline"} onClick={() => setMonth(i)}>
-              {m}
-            </Button>
-          ))}
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-4">
-          <KPI title="Facturación" icon={<TrendingUp />} current={metrics.currentRevenue} objective={metrics.objectiveRevenue} progress={revenueProgress} money />
-          <KPI title="Celulares" icon={<BarChart3 />} current={metrics.currentPhones} objective={metrics.objectivePhones} progress={phoneProgress} />
-          <KPI title="Unidades" icon={<Users />} current={metrics.currentUnits} objective={metrics.objectiveUnits} progress={unitsProgress} />
-          <KPI title="Facturas" icon={<Target />} current={metrics.tickets} objective={150} progress={64} />
-        </div>
-
-        <Tabs defaultValue="monthly">
-          <TabsList>
-            <TabsTrigger value="daily">Diario</TabsTrigger>
-            <TabsTrigger value="monthly">Mensual</TabsTrigger>
-            <TabsTrigger value="goals">Objetivos</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="daily">
-            <Card className="rounded-3xl border-0 shadow-sm">
-              <CardContent className="p-6 space-y-4">
-                <h2 className="font-semibold text-xl">Carga del día</h2>
-                <div className="grid md:grid-cols-4 gap-3">
-                  <Input type="date" />
-                  <Input placeholder="Efectivo" />
-                  <Input placeholder="Tarjetas" />
-                  <Input placeholder="Mercado Pago" />
-                </div>
-
-                {store.sellers.map((seller) => (
-                  <div key={seller} className={`grid md:grid-cols-6 gap-2 p-4 rounded-2xl ${store.light}`}>
-                    <div className="font-semibold">{seller}</div>
-                    <Input placeholder="Cel" />
-                    <Input placeholder="Acc" />
-                    <Input placeholder="Hydro" />
-                    <Input placeholder="Facturas" />
-                    <Input placeholder="$ Vendido" />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="monthly">
-            <div className="grid lg:grid-cols-2 gap-4">
-
-              <Card className="rounded-3xl border-0 shadow-sm">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4">Evolución diaria</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={mockSales}>
-                      <XAxis dataKey="day" />
-                      <Tooltip />
-                      <Line dataKey="revenue" strokeWidth={3} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-3xl border-0 shadow-sm">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4">Mix de productos</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie data={productMix} dataKey="value" innerRadius={60} outerRadius={100}>
-                        <Cell />
-                        <Cell />
-                        <Cell />
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-            </div>
-
-            <Card className="rounded-3xl border-0 shadow-sm mt-4">
-              <CardContent className="p-6 space-y-3">
-                <h3 className="font-semibold text-xl">Ranking vendedores</h3>
-                {store.sellers.map((seller) => (
-                  <div key={seller} className="grid md:grid-cols-5 gap-3 p-4 bg-slate-50 rounded-2xl">
-                    <div className="font-medium">{seller}</div>
-                    <div>$13.2M</div>
-                    <div>50 unidades</div>
-                    <div>$412k ticket</div>
-                    <div>61%</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="goals">
-            <Card className="rounded-3xl border-0 shadow-sm">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="font-semibold text-xl">Configuración de objetivos</h3>
-                <div className="grid md:grid-cols-3 gap-3">
-                  <Input placeholder="Meta facturación" />
-                  <Input placeholder="Meta celulares" />
-                  <Input placeholder="Meta unidades" />
-                </div>
-
-                {store.sellers.map((seller) => (
-                  <div key={seller} className="grid md:grid-cols-3 gap-3">
-                    <Input value={seller} readOnly />
-                    <Input placeholder="Meta $" />
-                    <Input placeholder="Meta unidades" />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-        </Tabs>
-      </div>
-    </div>
-  );
+function saveDB(){
+    localStorage.setItem("omniDB", JSON.stringify(DB));
 }
 
-function KPI({ title, current, objective, progress, money, icon }) {
-  return (
-    <Card className="rounded-3xl border-0 shadow-sm">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex justify-between items-center">
-          <p className="text-sm text-slate-500">{title}</p>
-          {icon}
-        </div>
-        <h3 className="text-xl font-bold">
-          {money ? `$${current.toLocaleString()}` : current}
-        </h3>
-        <p className="text-sm text-slate-500">
-          Objetivo: {money ? `$${objective.toLocaleString()}` : objective}
-        </p>
-        <Progress value={progress} />
-        <p className="text-right font-semibold">{progress}%</p>
-      </CardContent>
-    </Card>
-  );
+
+function changeStore(store){
+    currentStore = store;
+    render();
 }
+
+
+function changeMonth(m){
+    currentMonth = m;
+    render();
+}
+
+
+function renderMonths(){
+
+    const bar = document.getElementById("monthBar");
+
+    bar.innerHTML = "";
+
+    MONTHS.forEach((month,index)=>{
+
+        bar.innerHTML += `
+            <button 
+                class="month-btn ${currentMonth===index?'active':''}"
+                onclick="changeMonth(${index})">
+                ${month}
+            </button>
+        `;
+    });
+}
+
+
+function renderSellerInputs(){
+
+    const container = document.getElementById("sellerInputs");
+
+    container.innerHTML = "";
+
+    STAFF[currentStore].forEach(name=>{
+
+        container.innerHTML += `
+            <div class="seller-box bg-light">
+
+                <h6>${name}</h6>
+
+                <div class="row">
+
+                    <div class="col">
+                        <input class="form-control cel" placeholder="Cel">
+                    </div>
+
+                    <div class="col">
+                        <input class="form-control acc" placeholder="Acc">
+                    </div>
+
+                    <div class="col">
+                        <input class="form-control hydro" placeholder="Hydro">
+                    </div>
+
+                    <div class="col">
+                        <input class="form-control amount" placeholder="$">
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    });
+}
+
+
+function saveDay(){
+
+    const date = document.getElementById("saleDate").value;
+
+    if(!date){
+        alert("Seleccioná fecha");
+        return;
+    }
+
+    const sellers = document.querySelectorAll(".seller-box");
+
+    sellers.forEach((box,index)=>{
+
+        DB.sales.push({
+
+            store:currentStore,
+            month:currentMonth,
+            seller:STAFF[currentStore][index],
+
+            date,
+
+            cash:+document.getElementById("cash").value || 0,
+            cards:+document.getElementById("cards").value || 0,
+            mp:+document.getElementById("mp").value || 0,
+
+            cel:+box.querySelector(".cel").value || 0,
+            acc:+box.querySelector(".acc").value || 0,
+            hydro:+box.querySelector(".hydro").value || 0,
+
+            amount:+box.querySelector(".amount").value || 0
+
+        });
+
+    });
+
+    saveDB();
+
+    render();
+}
+
+
+function saveGoals(){
+
+    const key = `${currentStore}-${currentMonth}`;
+
+    DB.goals[key] = {
+
+        money:+document.getElementById("goalM").value || 0,
+        phones:+document.getElementById("goalC").value || 0,
+        units:+document.getElementById("goalU").value || 0
+
+    };
+
+    saveDB();
+
+    render();
+}
+
+
+function renderKPIs(data){
+
+    const totalRevenue = data.reduce((a,b)=>a+b.amount,0);
+
+    const totalPhones = data.reduce((a,b)=>a+b.cel,0);
+
+    const totalUnits = data.reduce((a,b)=>
+        a+b.cel+b.acc+b.hydro,0
+    );
+
+    const goal = DB.goals[
+        `${currentStore}-${currentMonth}`
+    ] || {money:0,phones:0,units:0};
+
+
+    document.getElementById("kpiRevenue").innerText =
+        "$"+totalRevenue.toLocaleString();
+
+    document.getElementById("kpiPhones").innerText =
+        totalPhones;
+
+    document.getElementById("kpiUnits").innerText =
+        totalUnits;
+
+
+    document.getElementById("goalRevenue").innerText =
+        "Meta: $" + goal.money.toLocaleString();
+
+    document.getElementById("goalPhones").innerText =
+        "Meta: " + goal.phones;
+
+    document.getElementById("goalUnits").innerText =
+        "Meta: " + goal.units;
+
+}
+
+
+function renderCharts(data){
+
+    const totalCel = data.reduce((a,b)=>a+b.cel,0);
+    const totalAcc = data.reduce((a,b)=>a+b.acc,0);
+    const totalHydro = data.reduce((a,b)=>a+b.hydro,0);
+
+    if(productChart){
+        productChart.destroy();
+    }
+
+    productChart = new Chart(
+        document.getElementById("productChart"),
+        {
+            type:"doughnut",
+
+            data:{
+                labels:["Cel","Acc","Hydro"],
+
+                datasets:[{
+                    data:[
+                        totalCel,
+                        totalAcc,
+                        totalHydro
+                    ]
+                }]
+            }
+        }
+    );
+
+
+    const ranking = {};
+
+    STAFF[currentStore].forEach(s=>{
+        ranking[s]=0;
+    });
+
+    data.forEach(sale=>{
+        ranking[sale.seller]+=sale.amount;
+    });
+
+
+    document.getElementById("sellerRanking").innerHTML =
+        Object.entries(ranking)
+        .sort((a,b)=>b[1]-a[1])
+        .map(item=>`
+            <div class="mb-2">
+                <b>${item[0]}</b> —
+                $${item[1].toLocaleString()}
+            </div>
+        `).join("");
+
+}
+
+
+function render(){
+
+    document.getElementById("headerInfo").innerText =
+        `${currentStore.toUpperCase()} · ${MONTHS[currentMonth]}`;
+
+    renderMonths();
+
+    renderSellerInputs();
+
+    const filtered = DB.sales.filter(s=>
+        s.store===currentStore &&
+        s.month===currentMonth
+    );
+
+    renderKPIs(filtered);
+
+    renderCharts(filtered);
+
+}
+
+
+render();
+
+</script>
+
+</body>
+</html>
