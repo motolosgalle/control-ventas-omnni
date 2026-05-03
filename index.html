@@ -33,6 +33,24 @@ h1,h2,h3,.nav-link{font-family:'Google Sans',sans-serif}
 <div id="months" class="mb-4"></div>
 
 <div class="row g-3 mb-4">
+  <!-- Objetivos mensuales -->
+  <div class="col-12">
+    <div class="card-m3 p-3">
+      <h5 class="mb-3">Objetivos del Mes</h5>
+      <div class="row g-2">
+        <div class="col-md-3"><input id="goalLocalMoney" type="number" placeholder="Meta facturación local" class="form-control"></div>
+        <div class="col-md-3"><input id="goalLocalUnits" type="number" placeholder="Meta unidades local" class="form-control"></div>
+        <div class="col-md-3"><button class="btn btn-dark w-100" onclick="saveMonthlyGoals()">Guardar metas local</button></div>
+      </div>
+      <hr>
+      <div class="row g-2">
+        <div class="col-md-3"><select id="goalSellerName" class="form-select"></select></div>
+        <div class="col-md-3"><input id="goalSellerMoney" type="number" placeholder="Meta vendedor $" class="form-control"></div>
+        <div class="col-md-3"><input id="goalSellerUnits" type="number" placeholder="Meta vendedor unidades" class="form-control"></div>
+        <div class="col-md-3"><button class="btn btn-outline-dark w-100" onclick="saveSellerGoals()">Guardar metas vendedor</button></div>
+      </div>
+    </div>
+  </div>
   <div class="col-md-4"><div class="card-m3 p-3"><small>Facturación</small><h3 id="kpiMoney">$0</h3></div></div>
   <div class="col-md-4"><div class="card-m3 p-3"><small>Unidades</small><h3 id="kpiUnits">0</h3></div></div>
   <div class="col-md-4"><div class="card-m3 p-3"><small>Ticket Promedio</small><h3 id="kpiTicket">$0</h3></div></div>
@@ -92,7 +110,7 @@ h1,h2,h3,.nav-link{font-family:'Google Sans',sans-serif}
 <script>
 const staff={aldrey:['Juan Ignacio','German','Martina'],gallegos:['Lucas','German','Helena']};
 const months=['Enero','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const state={local:'aldrey',month:new Date().getMonth(),db:JSON.parse(localStorage.getItem('omni_pro'))||{sales:[],closures:[]},mainChart:null,sellerChart:null};
+const state={local:'aldrey',month:new Date().getMonth(),db:JSON.parse(localStorage.getItem('omni_pro'))||{sales:[],closures:[],goals:{},sellerGoals:{}},mainChart:null,sellerChart:null};
 
 function saveDB(){localStorage.setItem('omni_pro',JSON.stringify(state.db))}
 
@@ -114,7 +132,8 @@ li.className='nav-item seller-tab';
 li.innerHTML=`<button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSeller" onclick="renderSeller('${name}')">${name}</button>`;
 tabs.appendChild(li);
 });
-document.getElementById('fVendor').innerHTML=staff[state.local].map(v=>`<option>${v}</option>`).join('')
+document.getElementById('fVendor').innerHTML=staff[state.local].map(v=>`<option>${v}</option>`).join('');
+ document.getElementById('goalSellerName').innerHTML=staff[state.local].map(v=>`<option>${v}</option>`).join('')
 }
 
 function addSale(){
@@ -136,6 +155,18 @@ saveDB(); render();
 }
 
 function removeSale(id){state.db.sales=state.db.sales.filter(x=>x.id!==id); saveDB(); render();}
+
+function saveMonthlyGoals(){
+ const key=`${state.local}-${state.month}`;
+ state.db.goals[key]={money:+goalLocalMoney.value||0,units:+goalLocalUnits.value||0};
+ saveDB(); render();
+}
+
+function saveSellerGoals(){
+ const key=`${state.local}-${state.month}-${goalSellerName.value}`;
+ state.db.sellerGoals[key]={money:+goalSellerMoney.value||0,units:+goalSellerUnits.value||0};
+ saveDB(); render();
+}
 
 function render(){
 buildMonths(); buildSellerTabs();
