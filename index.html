@@ -3,159 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omni Gestión - Control de Ventas</title>
+    <title>Omni Gestión | Control de Ventas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <style>
-        :root {
-            --aldrey: #FF8C00;
-            --gallegos: #00BFFF;
-            --bg: #f8f9fa;
-        }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #333; }
+        :root { --aldrey: #FF8C00; --gallegos: #00BFFF; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f4f7f6; color: #333; }
         
-        /* Heurística: Visibilidad del estado del sistema (Meses) */
-        .month-bar { background: #fff; border-bottom: 2px solid #ddd; padding: 10px; overflow-x: auto; white-space: nowrap; position: sticky; top: 0; z-index: 1000; }
-        .month-btn { border: 2px solid #ddd; background: #fff; padding: 6px 15px; margin: 0 4px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .month-btn.active { background: #333; color: #fff; border-color: #333; }
+        /* Navegación de Meses (Timeline) */
+        .month-nav { background: #fff; border-bottom: 2px solid #ddd; padding: 10px; display: flex; justify-content: center; gap: 5px; sticky: top; z-index: 100; overflow-x: auto; }
+        .btn-month { border: 1px solid #ccc; background: white; border-radius: 20px; padding: 5px 15px; font-size: 0.9rem; transition: 0.3s; }
+        .btn-month.active { background: #333; color: white; border-color: #333; }
 
-        /* Selector de Local */
-        .local-selector { height: 100vh; display: flex; align-items: center; justify-content: center; gap: 30px; }
-        .card-local { width: 300px; padding: 40px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; color: white; border: none; font-weight: bold; font-size: 1.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .card-local:hover { transform: translateY(-10px); }
-        .bg-aldrey { background-color: var(--aldrey); }
-        .bg-gallegos { background-color: var(--gallegos); }
+        /* Selector de Local Inicial */
+        #selector-inicial { height: 100vh; display: flex; align-items: center; justify-content: center; gap: 40px; }
+        .card-select { width: 320px; padding: 50px; border-radius: 25px; text-align: center; cursor: pointer; transition: 0.4s; color: white; font-weight: bold; font-size: 1.8rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .card-select:hover { transform: scale(1.05); }
+        .btn-aldrey { background-color: var(--aldrey); }
+        .btn-gallegos { background-color: var(--gallegos); }
 
-        /* Dashboard */
-        .header-local { padding: 20px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 20px 20px; }
-        .card-stats { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%; border: 1px solid #eee; }
-        .accent-aldrey { border-top: 5px solid var(--aldrey); }
-        .accent-gallegos { border-top: 5px solid var(--gallegos); }
-        
-        /* Solapas de Vendedores */
-        .nav-pills .nav-link { color: #666; font-weight: 600; border-radius: 10px; margin-right: 5px; }
-        .nav-pills .nav-link.active.aldrey-tab { background-color: var(--aldrey) !important; color: white; }
-        .nav-pills .nav-link.active.gallegos-tab { background-color: var(--gallegos) !important; color: white; }
+        /* Estilos de la Interfaz */
+        .header-app { padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .nav-tabs .nav-link { font-weight: bold; color: #666; border: none; padding: 12px 25px; }
+        .nav-tabs .nav-link.active.tab-aldrey { border-bottom: 4px solid var(--aldrey); color: var(--aldrey); }
+        .nav-tabs .nav-link.active.tab-gallegos { border-bottom: 4px solid var(--gallegos); color: var(--gallegos); }
 
-        /* Tablas */
-        .table-custom { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card-metric { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #ccc; }
+        .border-aldrey { border-left-color: var(--aldrey); }
+        .border-gallegos { border-left-color: var(--gallegos); }
+
+        .form-section { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #eee; }
         .table-custom thead { background: #333; color: white; }
-
-        .btn-add { position: fixed; bottom: 30px; right: 30px; border-radius: 50px; padding: 15px 30px; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-<div id="inicio" class="local-selector">
-    <div class="card-local bg-aldrey" onclick="entrarLocal('aldrey')">PASEO ALDREY</div>
-    <div class="card-local bg-gallegos" onclick="entrarLocal('gallegos')">LOS GALLEGOS</div>
+<div id="selector-inicial">
+    <div class="card-select btn-aldrey" onclick="seleccionarLocal('aldrey')">ALDREY</div>
+    <div class="card-select btn-gallegos" onclick="seleccionarLocal('gallegos')">GALLEGOS</div>
 </div>
 
-<div id="app" style="display: none;">
-    <div class="month-bar text-center" id="monthBar"></div>
+<div id="main-app" style="display: none;">
+    <div class="month-nav" id="timeline"></div>
 
-    <div id="headerUI" class="header-local">
-        <h2 id="nombreLocal"></h2>
-        <button class="btn btn-sm btn-light" onclick="volverInicio()">Cambiar Local</button>
+    <div id="header-color" class="header-app">
+        <h2 id="titulo-local">LOCAL</h2>
+        <button class="btn btn-outline-light btn-sm" onclick="location.reload()">Cambiar Local</button>
     </div>
 
-    <div class="container-fluid px-4">
-        <div class="row mb-4">
+    <div class="container-fluid py-4">
+        <div class="row g-3 mb-4">
             <div class="col-md-3">
-                <div class="card-stats" id="borderLocal">
-                    <small class="text-muted">OBJETIVO FACTURACIÓN</small>
-                    <div class="d-flex align-items-center">
-                        <input type="number" id="metaFact" class="form-control form-control-sm me-2" placeholder="Cargar meta">
-                        <button class="btn btn-sm btn-dark" onclick="guardarMeta()">Ok</button>
+                <div class="card-metric" id="metric-fact">
+                    <small class="text-muted">OBJETIVO VENTA</small>
+                    <div class="d-flex gap-2">
+                        <input type="number" id="goal-money" class="form-control form-control-sm" placeholder="$">
+                        <button class="btn btn-dark btn-sm" onclick="updateGoals()">Ok</button>
                     </div>
-                    <h3 class="mt-2" id="progresoFact">$0</h3>
+                    <h4 class="mt-2" id="res-money">$0 / $0</h4>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-stats" id="borderUnid">
-                    <small class="text-muted">META UNIDADES</small>
-                    <input type="number" id="metaUnid" class="form-control form-control-sm" onchange="guardarMeta()">
-                    <h3 class="mt-2" id="progresoUnid">0</h3>
+                <div class="card-metric" id="metric-unid">
+                    <small class="text-muted">OBJETIVO UNIDADES</small>
+                    <input type="number" id="goal-units" class="form-control form-control-sm" onchange="updateGoals()">
+                    <h4 class="mt-2" id="res-units">0 / 0</h4>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-stats">
+                <div class="card-metric">
                     <small class="text-muted">TICKET PROMEDIO</small>
-                    <h3 id="ticketProm">$0</h3>
+                    <h4 class="mt-2" id="res-ticket">$0</h4>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card-stats">
-                    <small class="text-muted">VENTA TOTAL MES</small>
-                    <h3 id="totalVentaMes">$0</h3>
-                </div>
+            <div class="col-md-3 text-end">
+                <button class="btn btn-lg btn-dark w-100 h-100" data-bs-toggle="modal" data-bs-target="#modalCarga">
+                    + CARGAR VENTA DEL DÍA
+                </button>
             </div>
         </div>
 
-        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-            <li class="nav-item"><button class="nav-link active" id="tab-total" data-bs-toggle="pill" onclick="mostrarSeccion('total')">TOTAL LOCAL</button></li>
+        <ul class="nav nav-tabs mb-4" id="mainTabs">
+            <li class="nav-item">
+                <a class="nav-link active" id="tab-general" data-bs-toggle="tab" href="#seccion-general" onclick="showGeneral()">TOTAL LOCAL</a>
+            </li>
         </ul>
 
-        <div id="seccionTotal">
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="table-responsive">
-                        <table class="table table-custom align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Vendedor</th>
-                                    <th>Facturación</th>
-                                    <th>Cels</th>
-                                    <th>Acc</th>
-                                    <th>Hydro</th>
-                                    <th>Ticket</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaVentas"></tbody>
-                        </table>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="seccion-general">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="table-responsive">
+                            <table class="table table-white table-hover table-custom">
+                                <thead>
+                                    <tr>
+                                        <th>Día</th>
+                                        <th>Vendedor</th>
+                                        <th>Venta $</th>
+                                        <th>Cels</th>
+                                        <th>Acc</th>
+                                        <th>Hydro</th>
+                                        <th>Caja Total</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-ventas"></tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card-stats">
-                        <h5>Distribución de Unidades</h5>
-                        <canvas id="chartTotal"></canvas>
+                    <div class="col-md-4">
+                        <div class="card-metric border-aldrey">
+                            <h5>Distribución del Mes</h5>
+                            <canvas id="chart-general"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="seccionVendedor" style="display:none;">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card-stats text-center">
-                        <h4 id="vendedorNombre"></h4>
-                        <hr>
-                        <h5>Mix de Ventas (%)</h5>
-                        <canvas id="chartVendedor"></canvas>
+            <div class="tab-pane fade" id="seccion-vendedor">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card-metric text-center">
+                            <h3 id="vend-nombre">Nombre</h3>
+                            <hr>
+                            <h5>Mix de Ventas Individual</h5>
+                            <canvas id="chart-vendedor"></canvas>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-8">
-                    <div class="card-stats">
-                        <h5>Resumen Estadístico</h5>
-                        <div id="statsIndividual"></div>
+                    <div class="col-md-8">
+                        <div class="card-metric">
+                            <h5>Desempeño en el Mes</h5>
+                            <div id="vend-stats" class="row mt-4 text-center"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <button class="btn btn-dark btn-add" id="btnCarga" data-bs-toggle="modal" data-bs-target="#modalCarga">+ Cargar Venta</button>
 </div>
 
 <div class="modal fade" id="modalCarga" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header"><h5>Nueva Carga de Venta</h5></div>
+            <div class="modal-header"><h5>Nueva Entrada de Datos</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
-                <form id="formVenta">
+                <form id="form-registro">
                     <div class="row mb-3">
-                        <div class="col-md-6"><label>Día</
+                        <div class="col-md-6"><label>Fecha</label><input type="date" id="in-fecha" class="form-control" required></div>
+                        <div class="col-md-6"><label>Vendedor</label><select id="in-vendedor" class="form-select"></select></div>
+                    </div>
+                    <div class="form-section">
+                        <h6 class="fw-bold">RECUADRO DEL LOCAL (Caja Diaria)</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4"><input type="number" id="c-efectivo" placeholder="Efectivo" class="form-control"></div>
+                            <div class="col-md-4"><input type="number" id="c-tarjetas" placeholder="Tarjetas (Visa/Master)" class="form-control"></div>
+                            <div class="col-md-4"><input type="number" id="c-mp" placeholder="Mercado Pago" class="form-control"></div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <h6 class="fw-bold">DETALLE DEL VENDEDOR (Venta Propia)</h6>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-4"><input type="number" id="v-cels" placeholder="Unid. Celulares" class="form-control"></div>
+                            <div class="col-md-4"><input type="number" id="v-acc" placeholder="Unid. Accesorios" class="form-control"></div>
+                            <div class="col-md-4"><input type="number" id="v-hydro" placeholder="Unid. Hydrogel" class="form-control"></div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6"><input type="number" id="v-monto" placeholder="Monto total facturado $" class="form-control" required></div>
+                            <div class="col-md-6"><input type="number" id="v-clientes" placeholder="Cantidad de Clientes" class="form-control" required></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary w-100" onclick="saveData()">GUARDAR VENTA</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let local = '';
+    let mesActual = new Date().getMonth();
+    const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const staff = {
+        aldrey: ["Juan Ignacio", "Martina", "German"],
+        gallegos: ["Lucas", "Helena", "German"]
+    };
+
+    // Base de datos local
+    let storage = JSON.parse(localStorage.getItem('omni_v4')) || { entries: [], goals: {} };
+
+    function seleccionarLocal(l) {
+        local = l;
+        document.getElementById('selector-inicial').style.display = 'none';
+        document.getElementById('main-app').style.display = 'block';
+        document.getElementById('titulo-local').innerText = l === 'aldrey' ? 'PASEO ALDREY' : 'LOS GALLEGOS';
+        document.getElementById('header-color').className = 'header-app ' + (l === 'aldrey' ? 'btn-aldrey' : 'btn-gallegos');
+        
+        initUI();
+        render();
+    }
+
+    function initUI() {
+        // Render Timeline
+        const time = document.getElementById('timeline');
+        time.innerHTML = meses.map((m, i) => `<button class="btn-month ${i === mesActual ? 'active' : ''}" onclick="setMes(${i})">${m}</button>`).join('');
+
+        // Vendedores en Modal
+        const select = document.getElementById('in-vendedor');
+        select.innerHTML = staff[local].map(s => `<option value="${s}">${s}</option>`).join('');
+
+        // Solapas de Vendedores
+        const tabs = document.getElementById('mainTabs');
+        staff[local].forEach(s => {
+            tabs.innerHTML += `<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#seccion-vendedor" onclick="showVendedor('${s}')">${s.toUpperCase()}</a></li>`;
+        });
+        
+        // Estilo dinámico de tabs
+        const tabLinks = document.querySelectorAll('.nav-link');
+        tabLinks.forEach(t => t.addEventListener('click', () => {
+            tabLinks.forEach(l => l.classList.remove('tab-aldrey', 'tab-gallegos'));
+            t.classList.add(local === 'aldrey' ? 'tab-aldrey' : 'tab-gallegos');
+        }));
+    }
+
+    function setMes(i) {
+        mesActual = i;
+        initUI();
+        render();
+    }
+
+    function updateGoals() {
+        const key = `${local}-${mesActual}`;
+        storage.goals[key] = {
+            m: document.getElementById('goal-money').value,
+            u: document.getElementById('goal-units').value
+        };
+        save();
+        render();
+    }
+
+    function saveData() {
+        const entry = {
+            id: Date.now(),
+            local: local,
+            mes: mesActual,
+            fecha: document.getElementById('in-fecha').value,
+            vendedor: document.getElementById('in-vendedor').value,
+            caja: (parseFloat(document.getElementById('c-efectivo').value)||0) + (parseFloat(document.getElementById('c-tarjetas').value)||0) + (parseFloat(document.getElementById('c-mp').value)||0),
+            cels: parseInt(document.getElementById('v-cels').value)||0,
+            acc: parseInt(document.getElementById('v-acc').value)||0,
+            hydro: parseInt(document.getElementById('v-hydro').value)||0,
+            monto: parseFloat(document.getElementById('v-monto').value)||0,
+            clientes: parseInt(document.getElementById('v-clientes').value)||0
+        };
+        storage.entries.push(entry);
+        save();
+        bootstrap.Modal.getInstance(document.getElementById('modalCarga')).hide();
+        document.getElementById('form-registro').reset();
+        render();
+    }
+
+    function deleteEntry(id) {
+        if(confirm("¿Eliminar esta carga?")) {
+            storage.entries = storage.entries.filter(e => e.id !== id);
+            save();
+            render();
+        }
+    }
+
+    function save() { localStorage.setItem('omni_v4', JSON.stringify(storage)); }
+
+    let chartG, chartV;
+
+    function render() {
+        const key = `${local}-${mesActual}`;
+        const goal = storage.goals[key] || { m: 0, u: 0 };
+        document.getElementById('goal-money').value = goal.m;
+        document.getElementById('goal-units').value = goal.u;
+
+        const data = storage.entries.filter(e => e.local === local && e.mes === mesActual);
+        
+        const totalM = data.reduce((s, e) => s + e.monto, 0);
+        const totalU = data.reduce((s, e) => s + e.cels + e.acc + e.hydro, 0);
+        const totalC = data.reduce((s, e) => s + e.clientes, 0);
+
+        document.getElementById('res-money').innerText = `$${totalM.toLocaleString()} / $${(parseFloat(goal.m)||0).toLocaleString()}`;
+        document.getElementById('res-units').innerText = `${totalU} / ${goal.u}`;
+        document.getElementById('res-ticket').innerText = `$${totalC > 0 ? (totalM/totalC).toFixed(0) : 0}`;
+
+        const list = document.getElementById('lista-ventas');
+        list.innerHTML = data.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).map(e => `
+            <tr>
+                <td>${e.fecha.split('-').reverse().slice(0,2).join('/')}</td>
+                <td>${e.vendedor}</td>
+                <td class="fw-bold">$${e.monto.toLocaleString()}</td>
+                <td>${e.cels}</td>
+                <td>${e.acc}</td>
+                <td>${e.hydro}</td>
+                <td class="text-muted">$${e.caja.toLocaleString()}</td>
+                <td><button class="btn btn-sm text-danger" onclick="deleteEntry(${e.id})">×</button></td>
+            </tr>
+        `).join('');
+
+        renderChartGeneral(data);
+    }
+
+    function renderChartGeneral(data) {
+        const ctx = document.getElementById('chart-general').getContext('2d');
+        if(chartG) chartG.destroy();
+        chartG = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Cels', 'Acc', 'Hydro'],
+                datasets: [{
+                    data: [
+                        data.reduce((s,e) => s + e.cels, 0),
+                        data.reduce((s,e) => s + e.acc, 0),
+                        data.reduce((s,e) => s + e.hydro, 0)
+                    ],
+                    backgroundColor: [local === 'aldrey' ? '#FF8C00' : '#00BFFF', '#333', '#999']
+                }]
+            }
+        });
+    }
+
+    function showVendedor(nombre) {
+        document.getElementById('vend-nombre').innerText = nombre;
+        const data = storage.entries.filter(e => e.local === local && e.mes === mesActual && e.vendedor === nombre);
+        
+        const tc = data.reduce((s,e) => s + e.cels, 0);
+        const ta = data.reduce((s,e) => s + e.acc, 0);
+        const th = data.reduce((s,e) => s + e.hydro, 0);
+        const tm = data.reduce((s,e) => s + e.monto, 0);
+
+        document.getElementById('vend-stats').innerHTML = `
+            <div class="col-4"><h5>$${tm.toLocaleString()}</h5><small>Facturado</small></div>
+            <div class="col-4"><h5>${tc+ta+th}</h5><small>Unidades</small></div>
+            <div class="col-4"><h5>$${data.length > 0 ? (tm/data.reduce((s,e)=>s+e.clientes,0)).toFixed(0) : 0}</h5><small>Ticket Prom.</small></div>
+        `;
+
+        const ctx = document.getElementById('chart-vendedor').getContext('2d');
+        if(chartV) chartV.destroy();
+        chartV = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Cels', 'Acc', 'Hydro'],
+                datasets: [{
+                    data: [tc, ta, th],
+                    backgroundColor: [local === 'aldrey' ? '#FF8C00' : '#00BFFF', '#444', '#CCC']
+                }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    function showGeneral() { render(); }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
