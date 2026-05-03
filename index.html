@@ -1,380 +1,147 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omni Gestión | Control de Ventas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --aldrey: #FF8C00; --gallegos: #00BFFF; }
-        body { font-family: 'Roboto', sans-serif; background-color: #f4f7f6; color: #333; }
-        
-        .month-nav { background: #fff; border-bottom: 2px solid #ddd; padding: 10px; display: flex; justify-content: center; gap: 5px; position: sticky; top: 0; z-index: 100; overflow-x: auto; }
-        .btn-month { border: 1px solid #ccc; background: white; border-radius: 20px; padding: 5px 15px; font-size: 0.9rem; transition: 0.3s; white-space: nowrap; }
-        .btn-month.active { background: #333; color: white; border-color: #333; }
-
-        #selector-inicial { height: 100vh; display: flex; align-items: center; justify-content: center; gap: 40px; }
-        .card-select { width: 320px; padding: 50px; border-radius: 25px; text-align: center; cursor: pointer; transition: 0.4s; color: white; font-weight: bold; font-size: 1.8rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-        .card-select:hover { transform: scale(1.05); }
-        .btn-aldrey { background-color: var(--aldrey); }
-        .btn-gallegos { background-color: var(--gallegos); }
-
-        .header-app { padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
-        .nav-tabs .nav-link { font-weight: bold; color: #666; border: none; padding: 12px 20px; }
-        .nav-tabs .nav-link.active { border-bottom: 4px solid #333; color: #333; }
-        
-        .card-metric { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #ccc; height: 100%; }
-        .border-aldrey { border-left-color: var(--aldrey); }
-        .border-gallegos { border-left-color: var(--gallegos); }
-
-        .form-section { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #eee; }
-        .table-custom thead { background: #333; color: white; }
-        .stat-row { border-bottom: 1px solid #eee; padding: 10px 0; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omni Sales Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background:#f7f8fb; }
+    .card-soft { border:none; border-radius:20px; box-shadow:0 4px 18px rgba(0,0,0,.06); }
+    .local-btn.active { font-weight:700; }
+    canvas { max-height:300px; }
+  </style>
 </head>
 <body>
-
-<div id="selector-inicial">
-    <div class="card-select btn-aldrey" onclick="seleccionarLocal('aldrey')">ALDREY</div>
-    <div class="card-select btn-gallegos" onclick="seleccionarLocal('gallegos')">GALLEGOS</div>
-</div>
-
-<div id="main-app" style="display: none;">
-    <div class="month-nav" id="timeline"></div>
-
-    <div id="header-color" class="header-app">
-        <h2 id="titulo-local">LOCAL</h2>
-        <button class="btn btn-outline-light btn-sm" onclick="location.reload()">Cambiar Local</button>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1">Omni Sales Manager</h1>
+      <small class="text-muted">Control de Aldrey y Gallegos</small>
     </div>
-
-    <div class="container-fluid py-4">
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <div class="card-metric" id="metric-fact">
-                    <small class="text-muted">OBJETIVO VENTA (MES)</small>
-                    <div class="d-flex gap-2">
-                        <input type="number" id="goal-money" class="form-control form-control-sm" placeholder="$">
-                        <button class="btn btn-dark btn-sm" onclick="updateGoals()">Ok</button>
-                    </div>
-                    <h4 class="mt-2" id="res-money">$0 / $0</h4>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card-metric" id="metric-unid">
-                    <small class="text-muted">OBJETIVO UNIDADES (MES)</small>
-                    <div class="d-flex gap-2">
-                        <input type="number" id="goal-units" class="form-control form-control-sm" placeholder="Q">
-                        <button class="btn btn-dark btn-sm" onclick="updateGoals()">Ok</button>
-                    </div>
-                    <h4 class="mt-2" id="res-units">0 / 0</h4>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <button class="btn btn-dark w-100 h-100 fs-5 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCarga">
-                    + CARGAR DÍA / VENDEDOR
-                </button>
-            </div>
-        </div>
-
-        <ul class="nav nav-tabs mb-4" id="mainTabs">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#seccion-general" onclick="render()">TOTAL LOCAL</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#seccion-estadistica" onclick="renderEstadisticas()">ESTADÍSTICA DIARIA</a></li>
-            </ul>
-
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="seccion-general">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-custom">
-                                <thead>
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th>Vendedor</th>
-                                        <th>Venta $</th>
-                                        <th>Cels</th>
-                                        <th>Acc</th>
-                                        <th>Ticket</th>
-                                        <th>Caja Local</th>
-                                        <th>Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="lista-ventas"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card-metric">
-                            <h5>Mix de Ventas Mensual</h5>
-                            <canvas id="chart-general"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="seccion-estadistica">
-                <div class="card-metric">
-                    <h5>Resumen Diario del Mes</h5>
-                    <div id="lista-estadistica" class="mt-3"></div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="seccion-vendedor">
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        <div class="card-metric">
-                            <h3 id="vend-nombre">Nombre</h3>
-                            <hr>
-                            <canvas id="chart-vendedor"></canvas>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card-metric">
-                            <h5>Métricas del Vendedor</h5>
-                            <div id="vend-stats" class="row mt-4 text-center"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="btn-group">
+      <button class="btn btn-outline-dark local-btn" onclick="setLocal('aldrey')">Aldrey</button>
+      <button class="btn btn-outline-dark local-btn" onclick="setLocal('gallegos')">Gallegos</button>
     </div>
-</div>
+  </div>
 
-<div class="modal fade" id="modalCarga" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white"><h5>Carga de Actividad Diaria</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">
-                <form id="form-registro">
-                    <div class="row mb-3">
-                        <div class="col-md-6"><label class="fw-bold">Fecha de la Operación</label><input type="date" id="in-fecha" class="form-control" required></div>
-                        <div class="col-md-6"><label class="fw-bold">Seleccionar Vendedor</label><select id="in-vendedor" class="form-select"></select></div>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h6 class="fw-bold text-primary">1. CAJA TOTAL DEL LOCAL (Recuadro Home)</h6>
-                        <div class="row g-2">
-                            <div class="col-md-4"><label class="small">Efectivo</label><input type="number" id="c-efectivo" class="form-control"></div>
-                            <div class="col-md-4"><label class="small">Tarjetas</label><input type="number" id="c-tarjetas" class="form-control"></div>
-                            <div class="col-md-4"><label class="small">M. Pago</label><input type="number" id="c-mp" class="form-control"></div>
-                        </div>
-                    </div>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card card-soft p-3"><small>Facturación</small><h3 id="kpiMoney">$0</h3></div></div>
+    <div class="col-md-4"><div class="card card-soft p-3"><small>Unidades</small><h3 id="kpiUnits">0</h3></div></div>
+    <div class="col-md-4"><div class="card card-soft p-3"><small>Ticket promedio</small><h3 id="kpiTicket">$0</h3></div></div>
+  </div>
 
-                    <div class="form-section">
-                        <h6 class="fw-bold text-success">2. VENTA ESPECÍFICA DEL VENDEDOR</h6>
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-3"><label class="small">Cels</label><input type="number" id="v-cels" class="form-control" value="0"></div>
-                            <div class="col-md-3"><label class="small">Acc</label><input type="number" id="v-acc" class="form-control" value="0"></div>
-                            <div class="col-md-3"><label class="small">Hydro</label><input type="number" id="v-hydro" class="form-control" value="0"></div>
-                            <div class="col-md-3"><label class="small">Clientes</label><input type="number" id="v-clientes" class="form-control" value="1"></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12"><label class="fw-bold">Monto Facturado por este Vendedor ($)</label><input type="number" id="v-monto" class="form-control form-control-lg border-success" required></div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer"><button class="btn btn-primary w-100 btn-lg" onclick="saveData()">REGISTRAR VENTA</button></div>
-        </div>
+  <div class="card card-soft p-3 mb-4">
+    <h5>Nueva venta</h5>
+    <div class="row g-2">
+      <div class="col-md-2"><input id="fDate" type="date" class="form-control"></div>
+      <div class="col-md-2"><input id="fVendor" placeholder="Vendedor" class="form-control"></div>
+      <div class="col-md-2"><input id="fAmount" placeholder="Monto" type="number" class="form-control"></div>
+      <div class="col-md-2"><input id="fUnits" placeholder="Unidades" type="number" class="form-control"></div>
+      <div class="col-md-2"><input id="fClients" placeholder="Clientes" type="number" class="form-control"></div>
+      <div class="col-md-2"><button class="btn btn-dark w-100" onclick="addSale()">Guardar</button></div>
     </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card card-soft p-3">
+        <table class="table" id="salesTable">
+          <thead><tr><th>Fecha</th><th>Vendedor</th><th>Monto</th><th>Unid.</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card card-soft p-3">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-    let local = '';
-    let mesActual = new Date().getMonth();
-    const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-    const staff = {
-        aldrey: ["Juan Ignacio", "Martina", "German"],
-        gallegos: ["Lucas", "Helena", "German"]
-    };
+const DB_KEY = 'omni_sales_v2';
+const state = {
+  local: localStorage.getItem('lastLocal') || 'aldrey',
+  db: JSON.parse(localStorage.getItem(DB_KEY)) || { sales: [] },
+  chart: null
+};
 
-    let storage = JSON.parse(localStorage.getItem('omni_v5')) || { entries: [], goals: {} };
+function saveDB(){
+  localStorage.setItem(DB_KEY, JSON.stringify(state.db));
+  localStorage.setItem('lastLocal', state.local);
+}
 
-    function seleccionarLocal(l) {
-        local = l;
-        document.getElementById('selector-inicial').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-        document.getElementById('titulo-local').innerText = l.toUpperCase();
-        document.getElementById('header-color').className = 'header-app ' + (l === 'aldrey' ? 'btn-aldrey' : 'btn-gallegos');
-        
-        initTimeline();
-        initSellersTabs();
-        render();
-    }
+function setLocal(local){
+  state.local = local;
+  saveDB();
+  render();
+}
 
-    function initTimeline() {
-        const time = document.getElementById('timeline');
-        time.innerHTML = meses.map((m, i) => `<button class="btn-month ${i === mesActual ? 'active' : ''}" onclick="setMes(${i})">${m}</button>`).join('');
-    }
+function addSale(){
+  state.db.sales.push({
+    id: Date.now(),
+    local: state.local,
+    date: document.getElementById('fDate').value,
+    vendor: document.getElementById('fVendor').value,
+    amount: Number(document.getElementById('fAmount').value || 0),
+    units: Number(document.getElementById('fUnits').value || 0),
+    clients: Number(document.getElementById('fClients').value || 1)
+  });
+  saveDB();
+  render();
+}
 
-    function initSellersTabs() {
-        const tabs = document.getElementById('mainTabs');
-        // Limpiamos tabs de vendedores previos para evitar duplicados
-        document.querySelectorAll('.tab-vendedor-item').forEach(e => e.remove());
-        staff[local].forEach(s => {
-            const li = document.createElement('li');
-            li.className = 'nav-item tab-vendedor-item';
-            li.innerHTML = `<a class="nav-link" data-bs-toggle="tab" href="#seccion-vendedor" onclick="showVendedor('${s}')">${s.toUpperCase()}</a>`;
-            tabs.appendChild(li);
-        });
+function removeSale(id){
+  state.db.sales = state.db.sales.filter(x => x.id !== id);
+  saveDB();
+  render();
+}
 
-        const select = document.getElementById('in-vendedor');
-        select.innerHTML = staff[local].map(s => `<option value="${s}">${s}</option>`).join('');
-    }
+function render(){
+  document.querySelectorAll('.local-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase() === state.local);
+  });
 
-    function setMes(i) {
-        mesActual = i;
-        initTimeline();
-        render();
-    }
+  const sales = state.db.sales.filter(x => x.local === state.local);
 
-    function updateGoals() {
-        const key = `${local}-${mesActual}`;
-        storage.goals[key] = {
-            m: document.getElementById('goal-money').value,
-            u: document.getElementById('goal-units').value
-        };
-        save();
-        render();
-    }
+  const money = sales.reduce((a,b) => a + b.amount, 0);
+  const units = sales.reduce((a,b) => a + b.units, 0);
+  const clients = sales.reduce((a,b) => a + b.clients, 0);
 
-    function saveData() {
-        const entry = {
-            id: Date.now(),
-            local: local,
-            mes: mesActual,
-            fecha: document.getElementById('in-fecha').value,
-            vendedor: document.getElementById('in-vendedor').value,
-            caja: (parseFloat(document.getElementById('c-efectivo').value)||0) + (parseFloat(document.getElementById('c-tarjetas').value)||0) + (parseFloat(document.getElementById('c-mp').value)||0),
-            cels: parseInt(document.getElementById('v-cels').value)||0,
-            acc: parseInt(document.getElementById('v-acc').value)||0,
-            hydro: parseInt(document.getElementById('v-hydro').value)||0,
-            monto: parseFloat(document.getElementById('v-monto').value)||0,
-            clientes: parseInt(document.getElementById('v-clientes').value)||0
-        };
-        storage.entries.push(entry);
-        save();
-        bootstrap.Modal.getInstance(document.getElementById('modalCarga')).hide();
-        document.getElementById('form-registro').reset();
-        render();
-    }
+  document.getElementById('kpiMoney').textContent = '$' + money.toLocaleString();
+  document.getElementById('kpiUnits').textContent = units;
+  document.getElementById('kpiTicket').textContent = '$' + (clients ? Math.round(money/clients) : 0).toLocaleString();
 
-    function deleteEntry(id) {
-        if(confirm("¿Eliminar este registro?")) {
-            storage.entries = storage.entries.filter(e => e.id !== id);
-            save();
-            render();
-        }
-    }
+  document.querySelector('#salesTable tbody').innerHTML = sales.slice().reverse().map(s => `
+    <tr>
+      <td>${s.date}</td>
+      <td>${s.vendor}</td>
+      <td>$${s.amount.toLocaleString()}</td>
+      <td>${s.units}</td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="removeSale(${s.id})">X</button></td>
+    </tr>
+  `).join('');
 
-    function save() { localStorage.setItem('omni_v5', JSON.stringify(storage)); }
+  const vendorMap = {};
+  sales.forEach(s => vendorMap[s.vendor] = (vendorMap[s.vendor] || 0) + s.amount);
 
-    let chartG, chartV;
+  const ctx = document.getElementById('salesChart');
+  if(state.chart) state.chart.destroy();
 
-    function render() {
-        const key = `${local}-${mesActual}`;
-        const goal = storage.goals[key] || { m: 0, u: 0 };
-        document.getElementById('goal-money').value = goal.m;
-        document.getElementById('goal-units').value = goal.u;
+  state.chart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:Object.keys(vendorMap),
+      datasets:[{ data:Object.values(vendorMap) }]
+    },
+    options:{ plugins:{ legend:{ display:false } } }
+  });
+}
 
-        const data = storage.entries.filter(e => e.local === local && e.mes === mesActual);
-        const totalM = data.reduce((s, e) => s + e.monto, 0);
-        const totalU = data.reduce((s, e) => s + e.cels + e.acc + e.hydro, 0);
-
-        document.getElementById('res-money').innerText = `$${totalM.toLocaleString()} / $${(parseFloat(goal.m)||0).toLocaleString()}`;
-        document.getElementById('res-units').innerText = `${totalU} / ${goal.u}`;
-
-        const list = document.getElementById('lista-ventas');
-        list.innerHTML = data.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).map(e => `
-            <tr>
-                <td>${e.fecha.split('-').reverse().slice(0,2).join('/')}</td>
-                <td>${e.vendedor}</td>
-                <td class="fw-bold">$${e.monto.toLocaleString()}</td>
-                <td>${e.cels}</td>
-                <td>${e.acc}</td>
-                <td>$${e.clientes > 0 ? (e.monto/e.clientes).toFixed(0) : 0}</td>
-                <td class="text-muted">$${e.caja.toLocaleString()}</td>
-                <td><button class="btn btn-sm text-danger" onclick="deleteEntry(${e.id})">×</button></td>
-            </tr>
-        `).join('');
-
-        renderChartGeneral(data);
-    }
-
-    function renderChartGeneral(data) {
-        const ctx = document.getElementById('chart-general').getContext('2d');
-        if(chartG) chartG.destroy();
-        chartG = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Cels', 'Acc', 'Hydro'],
-                datasets: [{
-                    data: [
-                        data.reduce((s,e) => s + e.cels, 0),
-                        data.reduce((s,e) => s + e.acc, 0),
-                        data.reduce((s,e) => s + e.hydro, 0)
-                    ],
-                    backgroundColor: [local === 'aldrey' ? '#FF8C00' : '#00BFFF', '#333', '#999']
-                }]
-            }
-        });
-    }
-
-    function renderEstadisticas() {
-        const data = storage.entries.filter(e => e.local === local && e.mes === mesActual);
-        // Agrupar por día
-        const dias = {};
-        data.forEach(e => {
-            if(!dias[e.fecha]) dias[e.fecha] = { monto: 0, cels: 0, unid: 0, caja: 0 };
-            dias[e.fecha].monto += e.monto;
-            dias[e.fecha].cels += e.cels;
-            dias[e.fecha].unid += (e.cels + e.acc + e.hydro);
-            dias[e.fecha].caja += e.caja;
-        });
-
-        const container = document.getElementById('lista-estadistica');
-        container.innerHTML = Object.keys(dias).sort().reverse().map(fecha => `
-            <div class="stat-row d-flex justify-content-between align-items-center">
-                <span class="fw-bold">${fecha.split('-').reverse().join('/')}</span>
-                <span>Venta: <b>$${dias[fecha].monto.toLocaleString()}</b></span>
-                <span>Cels: <b>${dias[fecha].cels}</b></span>
-                <span>Unid Totales: <b>${dias[fecha].unid}</b></span>
-                <span class="text-primary small">Caja Local: $${dias[fecha].caja.toLocaleString()}</span>
-            </div>
-        `).join('') || '<p class="text-center text-muted">No hay datos este mes</p>';
-    }
-
-    function showVendedor(nombre) {
-        document.getElementById('vend-nombre').innerText = nombre;
-        const data = storage.entries.filter(e => e.local === local && e.mes === mesActual && e.vendedor === nombre);
-        
-        const tc = data.reduce((s,e) => s + e.cels, 0);
-        const ta = data.reduce((s,e) => s + e.acc, 0);
-        const th = data.reduce((s,e) => s + e.hydro, 0);
-        const tm = data.reduce((s,e) => s + e.monto, 0);
-
-        document.getElementById('vend-stats').innerHTML = `
-            <div class="col-4"><h5>$${tm.toLocaleString()}</h5><small>Total Vendido</small></div>
-            <div class="col-4"><h5>${tc+ta+th}</h5><small>Unid. Totales</small></div>
-            <div class="col-4"><h5>$${data.length > 0 ? (tm/data.reduce((s,e)=>s+e.clientes,0)).toFixed(0) : 0}</h5><small>Ticket Prom.</small></div>
-        `;
-
-        const ctx = document.getElementById('chart-vendedor').getContext('2d');
-        if(chartV) chartV.destroy();
-        chartV = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Cels', 'Acc', 'Hydro'],
-                datasets: [{
-                    data: [tc, ta, th],
-                    backgroundColor: [local === 'aldrey' ? '#FF8C00' : '#00BFFF', '#444', '#CCC']
-                }]
-            }
-        });
-    }
+render();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
