@@ -3,565 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omni Sales Manager | Dashboard Pro</title>
+    <title>Omni Gestión - Control de Ventas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <style>
         :root {
-            --aldrey-orange: #FF8C00;
-            --gallegos-celeste: #00BFFF;
-            --bg-light: #F4F7F6;
-            --text-dark: #1A1A1A;
-            --consulting-blue: #002D72;
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --aldrey: #FF8C00;
+            --gallegos: #00BFFF;
+            --bg: #f8f9fa;
         }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            margin: 0;
-            transition: all 0.3s ease;
-        }
-
-        /* Navegación por Meses */
-        .timeline-nav {
-            background: white;
-            padding: 15px 0;
-            border-bottom: 2px solid #E0E0E0;
-            box-shadow: var(--shadow-md);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .month-item {
-            cursor: pointer;
-            padding: 8px 18px;
-            border-radius: 25px;
-            font-weight: 500;
-            color: #666;
-            transition: 0.2s;
-            display: inline-block;
-            margin: 0 5px;
-        }
-
-        .month-item:hover { background: #f0f0f0; }
-        .month-item.active {
-            background: var(--consulting-blue);
-            color: white !important;
-        }
-
-        /* Pantalla de Selección */
-        .landing-screen {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-        }
-
-        .location-card {
-            border: none;
-            border-radius: 20px;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-            width: 350px;
-            text-align: center;
-            background: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .location-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-
-        .location-card.aldrey .card-header { background: var(--aldrey-orange); color: white; padding: 40px; }
-        .location-card.gallegos .card-header { background: var(--gallegos-celeste); color: white; padding: 40px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #333; }
         
-        .main-container { padding: 40px; display: none; }
+        /* Heurística: Visibilidad del estado del sistema (Meses) */
+        .month-bar { background: #fff; border-bottom: 2px solid #ddd; padding: 10px; overflow-x: auto; white-space: nowrap; position: sticky; top: 0; z-index: 1000; }
+        .month-btn { border: 2px solid #ddd; background: #fff; padding: 6px 15px; margin: 0 4px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .month-btn.active { background: #333; color: #fff; border-color: #333; }
+
+        /* Selector de Local */
+        .local-selector { height: 100vh; display: flex; align-items: center; justify-content: center; gap: 30px; }
+        .card-local { width: 300px; padding: 40px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; color: white; border: none; font-weight: bold; font-size: 1.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card-local:hover { transform: translateY(-10px); }
+        .bg-aldrey { background-color: var(--aldrey); }
+        .bg-gallegos { background-color: var(--gallegos); }
+
+        /* Dashboard */
+        .header-local { padding: 20px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 20px 20px; }
+        .card-stats { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%; border: 1px solid #eee; }
+        .accent-aldrey { border-top: 5px solid var(--aldrey); }
+        .accent-gallegos { border-top: 5px solid var(--gallegos); }
         
-        .action-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: var(--consulting-blue);
-        }
+        /* Solapas de Vendedores */
+        .nav-pills .nav-link { color: #666; font-weight: 600; border-radius: 10px; margin-right: 5px; }
+        .nav-pills .nav-link.active.aldrey-tab { background-color: var(--aldrey) !important; color: white; }
+        .nav-pills .nav-link.active.gallegos-tab { background-color: var(--gallegos) !important; color: white; }
 
-        .sub-headline {
-            font-weight: 300;
-            color: #555;
-            margin-bottom: 30px;
-            border-left: 4px solid var(--consulting-blue);
-            padding-left: 15px;
-        }
+        /* Tablas */
+        .table-custom { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .table-custom thead { background: #333; color: white; }
 
-        .metric-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: var(--shadow-md);
-            border-top: 5px solid transparent;
-            height: 100%;
-        }
-
-        /* Temas Dinámicos */
-        body.theme-aldrey .accent-color { color: var(--aldrey-orange); }
-        body.theme-aldrey .accent-border { border-top-color: var(--aldrey-orange); }
-        body.theme-aldrey .btn-primary { background: var(--aldrey-orange); border: none; }
-        
-        body.theme-gallegos .accent-color { color: var(--gallegos-celeste); }
-        body.theme-gallegos .accent-border { border-top-color: var(--gallegos-celeste); }
-        body.theme-gallegos .btn-primary { background: var(--gallegos-celeste); border: none; }
-
-        .nav-tabs-custom .nav-link {
-            border: none;
-            color: #666;
-            font-weight: 500;
-            padding: 12px 25px;
-            border-radius: 0;
-            border-bottom: 3px solid transparent;
-        }
-
-        .nav-tabs-custom .nav-link.active {
-            background: transparent;
-            color: var(--text-dark);
-            border-bottom-color: currentColor;
-        }
-
-        .goal-input {
-            background: #fdfdfd;
-            border: 1px dashed #ccc;
-            text-align: center;
-            font-weight: bold;
-        }
+        .btn-add { position: fixed; bottom: 30px; right: 30px; border-radius: 50px; padding: 15px 30px; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-<div id="landingScreen" class="landing-screen">
-    <div class="container text-center">
-        <h1 class="action-title mb-5">Omni Sales Framework v3.0</h1>
-        <div class="row justify-content-center gap-5">
-            <div class="col-auto">
-                <div class="location-card aldrey" onclick="initApp('aldrey')">
-                    <div class="card-header">
-                        <i class="fas fa-shopping-bag fa-4x mb-3"></i>
-                        <h3>PASEO ALDREY</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Sucursal Naranja</p>
-                        <button class="btn btn-outline-dark rounded-pill px-4">INGRESAR</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-auto">
-                <div class="location-card gallegos" onclick="initApp('gallegos')">
-                    <div class="card-header">
-                        <i class="fas fa-store fa-4x mb-3"></i>
-                        <h3>LOS GALLEGOS</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Sucursal Celeste</p>
-                        <button class="btn btn-outline-dark rounded-pill px-4">INGRESAR</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="inicio" class="local-selector">
+    <div class="card-local bg-aldrey" onclick="entrarLocal('aldrey')">PASEO ALDREY</div>
+    <div class="card-local bg-gallegos" onclick="entrarLocal('gallegos')">LOS GALLEGOS</div>
 </div>
 
-<div id="appInterface" style="display:none;">
-    <div class="timeline-nav">
-        <div class="container d-flex align-items-center justify-content-between">
-            <div id="monthTimeline" class="flex-grow-1 overflow-auto" style="white-space: nowrap;"></div>
-            <div class="ms-4">
-                <button class="btn btn-sm btn-dark" onclick="location.reload()">CAMBIAR LOCAL</button>
-            </div>
-        </div>
+<div id="app" style="display: none;">
+    <div class="month-bar text-center" id="monthBar"></div>
+
+    <div id="headerUI" class="header-local">
+        <h2 id="nombreLocal"></h2>
+        <button class="btn btn-sm btn-light" onclick="volverInicio()">Cambiar Local</button>
     </div>
 
-    <div class="main-container container">
-        <div class="row align-items-end mb-4">
-            <div class="col-md-8">
-                <h1 id="mainActionTitle" class="action-title">Resumen Mensual</h1>
-                <p class="sub-headline">Sucursal activa: <span id="locationLabel" class="fw-bold"></span></p>
+    <div class="container-fluid px-4">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card-stats" id="borderLocal">
+                    <small class="text-muted">OBJETIVO FACTURACIÓN</small>
+                    <div class="d-flex align-items-center">
+                        <input type="number" id="metaFact" class="form-control form-control-sm me-2" placeholder="Cargar meta">
+                        <button class="btn btn-sm btn-dark" onclick="guardarMeta()">Ok</button>
+                    </div>
+                    <h3 class="mt-2" id="progresoFact">$0</h3>
+                </div>
             </div>
-            <div class="col-md-4 text-end pb-4">
-                <button class="btn btn-primary shadow rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalCarga">
-                    <i class="fas fa-plus me-2"></i>NUEVA CARGA DIARIA
-                </button>
+            <div class="col-md-3">
+                <div class="card-stats" id="borderUnid">
+                    <small class="text-muted">META UNIDADES</small>
+                    <input type="number" id="metaUnid" class="form-control form-control-sm" onchange="guardarMeta()">
+                    <h3 class="mt-2" id="progresoUnid">0</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-stats">
+                    <small class="text-muted">TICKET PROMEDIO</small>
+                    <h3 id="ticketProm">$0</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-stats">
+                    <small class="text-muted">VENTA TOTAL MES</small>
+                    <h3 id="totalVentaMes">$0</h3>
+                </div>
             </div>
         </div>
 
-        <ul class="nav nav-tabs nav-tabs-custom mb-4" id="sellerTabs">
-            <li class="nav-item">
-                <a class="nav-link active" data-bs-toggle="tab" href="#tabTotal" onclick="renderMonthlyDashboard()">TOTAL LOCAL</a>
-            </li>
+        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item"><button class="nav-link active" id="tab-total" data-bs-toggle="pill" onclick="mostrarSeccion('total')">TOTAL LOCAL</button></li>
         </ul>
 
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="tabTotal">
-                <div class="row g-4 mb-5">
-                    <div class="col-md-3">
-                        <div class="metric-card accent-border">
-                            <small class="text-muted fw-bold">FACTURACIÓN MES</small>
-                            <h2 class="accent-color mt-2 fw-bold" id="totalMonthFact">$0</h2>
-                            <div class="progress mt-3" style="height: 6px;">
-                                <div id="factProgress" class="progress-bar bg-success" style="width: 0%"></div>
-                            </div>
-                            <small id="factTargetLabel" class="text-muted">Meta: $0</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="metric-card accent-border">
-                            <small class="text-muted fw-bold">UNIDADES TOTALES</small>
-                            <h2 class="mt-2 fw-bold" id="totalMonthUnid">0</h2>
-                            <small id="unidTargetLabel" class="text-muted">Meta: 0</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="metric-card accent-border">
-                            <small class="text-muted fw-bold">TICKET PROMEDIO</small>
-                            <h2 class="mt-2 fw-bold" id="totalMonthTicket">$0</h2>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="metric-card accent-border">
-                            <small class="text-muted fw-bold">GAMA ALTA</small>
-                            <h2 class="mt-2 fw-bold" id="totalMonthGama">0</h2>
-                        </div>
+        <div id="seccionTotal">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Vendedor</th>
+                                    <th>Facturación</th>
+                                    <th>Cels</th>
+                                    <th>Acc</th>
+                                    <th>Hydro</th>
+                                    <th>Ticket</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaVentas"></tbody>
+                        </table>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="metric-card">
-                            <h5 class="fw-bold mb-4">Historial de Cargas (Heurística: Libertad de Usuario)</h5>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Fecha</th>
-                                            <th>Caja Local</th>
-                                            <th>Vendedor</th>
-                                            <th>Cel</th>
-                                            <th>Venta $</th>
-                                            <th>Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="historyTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="metric-card">
-                            <h5 class="fw-bold mb-4">Configurar Metas del Mes</h5>
-                            <div class="mb-3">
-                                <label class="small fw-bold">OBJETIVO FACTURACIÓN $</label>
-                                <input type="number" id="goalFact" class="form-control goal-input" onchange="updateGoals()">
-                            </div>
-                            <div class="mb-3">
-                                <label class="small fw-bold">OBJETIVO UNIDADES</label>
-                                <input type="number" id="goalUnid" class="form-control goal-input" onchange="updateGoals()">
-                            </div>
-                            <hr>
-                            <h6 class="fw-bold mb-3">Distribución por Vendedor</h6>
-                            <canvas id="mainChart" height="250"></canvas>
-                        </div>
+                <div class="col-md-4">
+                    <div class="card-stats">
+                        <h5>Distribución de Unidades</h5>
+                        <canvas id="chartTotal"></canvas>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="tab-pane fade" id="tabSellerDetail">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="metric-card text-center">
-                            <i class="fas fa-user-circle fa-4x accent-color mb-3"></i>
-                            <h3 id="sellerNameTitle" class="fw-bold"></h3>
-                            <p class="text-muted">Desempeño Mensual</p>
-                            <hr>
-                            <div class="d-flex justify-content-between px-3">
-                                <span>Facturado:</span> <span id="sellerTotalFact" class="fw-bold"></span>
-                            </div>
-                            <div class="d-flex justify-content-between px-3 mt-2">
-                                <span>Celulares:</span> <span id="sellerTotalCel" class="fw-bold"></span>
-                            </div>
-                        </div>
+        <div id="seccionVendedor" style="display:none;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card-stats text-center">
+                        <h4 id="vendedorNombre"></h4>
+                        <hr>
+                        <h5>Mix de Ventas (%)</h5>
+                        <canvas id="chartVendedor"></canvas>
                     </div>
-                    <div class="col-md-8">
-                        <div class="metric-card">
-                            <h5 class="fw-bold mb-4">Proporción de Venta (Mix de Productos)</h5>
-                            <div style="max-width: 400px; margin: auto;">
-                                <canvas id="sellerChart"></canvas>
-                            </div>
-                        </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card-stats">
+                        <h5>Resumen Estadístico</h5>
+                        <div id="statsIndividual"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <button class="btn btn-dark btn-add" id="btnCarga" data-bs-toggle="modal" data-bs-target="#modalCarga">+ Cargar Venta</button>
 </div>
 
 <div class="modal fade" id="modalCarga" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content" style="border-radius: 20px;">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">REGISTRO DIARIO</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+        <div class="modal-content">
+            <div class="modal-header"><h5>Nueva Carga de Venta</h5></div>
             <div class="modal-body">
-                <form id="formCarga">
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">FECHA</label>
-                            <input type="date" id="inputFecha" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">VENDEDOR</label>
-                            <select id="inputVendedor" class="form-select" required></select>
-                        </div>
-                    </div>
-                    
-                    <h6 class="fw-bold accent-color border-bottom pb-2 mb-3">CAJA DEL LOCAL (Recuadro Total)</h6>
-                    <div class="row g-2 mb-4">
-                        <div class="col-4"><input type="number" id="inCash" placeholder="Efectivo" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inVisa" placeholder="Visa" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inMaster" placeholder="Master" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inMP" placeholder="MercadoPago" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inOther" placeholder="Otros" class="form-control"></div>
-                    </div>
-                    
-                    <h6 class="fw-bold accent-color border-bottom pb-2 mb-3">VENTA DEL VENDEDOR (Unidades)</h6>
-                    <div class="row g-2">
-                        <div class="col-4"><input type="number" id="inFacturas" placeholder="Cant. Facturas" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inCel" placeholder="Celulares Q" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inAcc" placeholder="Accesorios Q" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inHydro" placeholder="Hydrogels Q" class="form-control"></div>
-                        <div class="col-4"><input type="number" id="inGama" placeholder="Gama Alta Q" class="form-control"></div>
-                        <div class="col-12 mt-3"><input type="number" id="inVenta" placeholder="MONTO TOTAL VENTA $ (ESTE VENDEDOR)" class="form-control fw-bold border-primary"></div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">CANCELAR</button>
-                <button type="button" class="btn btn-primary px-5" onclick="saveEntry()">GUARDAR CARGA</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    /* LÓGICA DE LA APLICACIÓN */
-    let currentLocal = '';
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
-    let data = JSON.parse(localStorage.getItem('omniData_v3')) || { entries: [], goals: {} };
-    
-    const config = {
-        aldrey: { sellers: ["Juan Ignacio", "Martina", "German"] },
-        gallegos: { sellers: ["Lucas", "Helena", "German"] }
-    };
-    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
-    // 1. Inicializar al elegir local
-    function initApp(local) {
-        currentLocal = local;
-        document.body.className = 'theme-' + local;
-        document.getElementById('landingScreen').style.display = 'none';
-        document.getElementById('appInterface').style.display = 'block';
-        document.getElementById('locationLabel').innerText = local.toUpperCase();
-        
-        renderTimeline();
-        setupSellers();
-        renderMonthlyDashboard();
-    }
-
-    // 2. Línea de tiempo de meses
-    function renderTimeline() {
-        const container = document.getElementById('monthTimeline');
-        container.innerHTML = monthNames.map((name, i) => `
-            <div class="month-item ${i === currentMonth ? 'active' : ''}" onclick="changeMonth(${i})">${name}</div>
-        `).join('');
-    }
-
-    function changeMonth(i) {
-        currentMonth = i;
-        renderTimeline();
-        renderMonthlyDashboard();
-    }
-
-    // 3. Configurar pestañas y select de vendedores
-    function setupSellers() {
-        const sellers = config[currentLocal].sellers;
-        const select = document.getElementById('inputVendedor');
-        const tabs = document.getElementById('sellerTabs');
-        
-        select.innerHTML = sellers.map(s => `<option value="${s}">${s}</option>`).join('');
-        
-        document.querySelectorAll('.dynamic-seller').forEach(e => e.remove());
-        sellers.forEach(s => {
-            tabs.innerHTML += `
-                <li class="nav-item dynamic-seller">
-                    <a class="nav-link" data-bs-toggle="tab" href="#tabSellerDetail" onclick="viewSeller('${s}')">${s}</a>
-                </li>
-            `;
-        });
-    }
-
-    // 4. Guardar datos
-    function saveEntry() {
-        const entry = {
-            id: Date.now(),
-            local: currentLocal,
-            fecha: document.getElementById('inputFecha').value,
-            vendedor: document.getElementById('inputVendedor').value,
-            cajaTotal: (parseFloat(document.getElementById('inCash').value)||0) + 
-                       (parseFloat(document.getElementById('inVisa').value)||0) + 
-                       (parseFloat(document.getElementById('inMaster').value)||0) + 
-                       (parseFloat(document.getElementById('inMP').value)||0) + 
-                       (parseFloat(document.getElementById('inOther').value)||0),
-            facturas: parseInt(document.getElementById('inFacturas').value)||0,
-            cel: parseInt(document.getElementById('inCel').value)||0,
-            acc: parseInt(document.getElementById('inAcc').value)||0,
-            hydro: parseInt(document.getElementById('inHydro').value)||0,
-            gama: parseInt(document.getElementById('inGama').value)||0,
-            ventaVendedor: parseFloat(document.getElementById('inVenta').value)||0
-        };
-
-        data.entries.push(entry);
-        localStorage.setItem('omniData_v3', JSON.stringify(data));
-        bootstrap.Modal.getInstance(document.getElementById('modalCarga')).hide();
-        renderMonthlyDashboard();
-        document.getElementById('formCarga').reset();
-    }
-
-    function deleteEntry(id) {
-        if(confirm("¿Estás seguro de eliminar este registro?")) {
-            data.entries = data.entries.filter(e => e.id !== id);
-            localStorage.setItem('omniData_v3', JSON.stringify(data));
-            renderMonthlyDashboard();
-        }
-    }
-
-    // 5. Metas
-    function updateGoals() {
-        const key = `${currentLocal}-${currentMonth}`;
-        data.goals[key] = {
-            fact: parseFloat(document.getElementById('goalFact').value)||0,
-            unid: parseInt(document.getElementById('goalUnid').value)||0
-        };
-        localStorage.setItem('omniData_v3', JSON.stringify(data));
-        renderMonthlyDashboard();
-    }
-
-    // 6. Renders y Gráficos
-    let mainChart, sellerChart;
-
-    function renderMonthlyDashboard() {
-        const monthData = data.entries.filter(e => {
-            const d = new Date(e.fecha + "T00:00:00");
-            return e.local === currentLocal && d.getMonth() === currentMonth;
-        });
-
-        const tFact = monthData.reduce((a,c) => a + c.ventaVendedor, 0);
-        const tUnid = monthData.reduce((a,c) => a + c.cel + c.acc + c.hydro, 0);
-        const tF = monthData.reduce((a,c) => a + c.facturas, 0);
-        
-        document.getElementById('totalMonthFact').innerText = `$${tFact.toLocaleString()}`;
-        document.getElementById('totalMonthUnid').innerText = tUnid;
-        document.getElementById('totalMonthTicket').innerText = tF > 0 ? `$${(tFact/tF).toFixed(0)}` : "$0";
-        document.getElementById('totalMonthGama').innerText = monthData.reduce((a,c) => a + c.gama, 0);
-
-        const key = `${currentLocal}-${currentMonth}`;
-        const g = data.goals[key] || { fact: 0, unid: 0 };
-        document.getElementById('goalFact').value = g.fact;
-        document.getElementById('goalUnid').value = g.unid;
-        document.getElementById('factTargetLabel').innerText = `Meta: $${g.fact.toLocaleString()}`;
-        document.getElementById('unidTargetLabel').innerText = `Meta: ${g.unid}`;
-        
-        const perc = g.fact > 0 ? Math.min((tFact/g.fact)*100, 100) : 0;
-        document.getElementById('factProgress').style.width = perc + "%";
-
-        // Tabla Historial
-        document.getElementById('historyTableBody').innerHTML = monthData.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).map(e => `
-            <tr>
-                <td>${e.fecha.split('-').reverse().join('/')}</td>
-                <td class="fw-bold">$${e.cajaTotal.toLocaleString()}</td>
-                <td>${e.vendedor}</td>
-                <td>${e.cel}</td>
-                <td>$${e.ventaVendedor.toLocaleString()}</td>
-                <td><button class="btn btn-sm text-danger" onclick="deleteEntry(${e.id})"><i class="fas fa-trash"></i></button></td>
-            </tr>
-        `).join('');
-
-        // Gráfico de Barras Principal
-        if(mainChart) mainChart.destroy();
-        const sellers = config[currentLocal].sellers;
-        const sellerValues = sellers.map(s => monthData.filter(e => e.vendedor === s).reduce((a,c) => a + c.ventaVendedor, 0));
-
-        mainChart = new Chart(document.getElementById('mainChart'), {
-            type: 'bar',
-            data: {
-                labels: sellers,
-                datasets: [{
-                    label: 'Venta por Vendedor',
-                    data: sellerValues,
-                    backgroundColor: currentLocal === 'aldrey' ? '#FF8C00aa' : '#00BFFFaa',
-                    borderColor: currentLocal === 'aldrey' ? '#FF8C00' : '#00BFFF',
-                    borderWidth: 1
-                }]
-            }
-        });
-    }
-
-    function viewSeller(name) {
-        const monthData = data.entries.filter(e => {
-            const d = new Date(e.fecha + "T00:00:00");
-            return e.local === currentLocal && d.getMonth() === currentMonth && e.vendedor === name;
-        });
-
-        const tFact = monthData.reduce((a,c) => a + c.ventaVendedor, 0);
-        const tCel = monthData.reduce((a,c) => a + c.cel, 0);
-        const tAcc = monthData.reduce((a,c) => a + c.acc, 0);
-        const tH = monthData.reduce((a,c) => a + c.hydro, 0);
-
-        document.getElementById('sellerNameTitle').innerText = name;
-        document.getElementById('sellerTotalFact').innerText = `$${tFact.toLocaleString()}`;
-        document.getElementById('sellerTotalCel').innerText = tCel;
-
-        if(sellerChart) sellerChart.destroy();
-        sellerChart = new Chart(document.getElementById('sellerChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Cels', 'Acc', 'Hydro'],
-                datasets: [{
-                    data: [tCel, tAcc, tH],
-                    backgroundColor: ['#002D72', '#666', '#CCC']
-                }]
-            },
-            options: {
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: (c) => {
-                                let total = tCel + tAcc + tH;
-                                let p = total > 0 ? ((c.raw/total)*100).toFixed(1) : 0;
-                                return `${c.label}: ${c.raw} (${p}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-</script>
-</body>
-</html>
+                <form id="formVenta">
+                    <div class="row mb-3">
+                        <div class="col-md-6"><label>Día</
