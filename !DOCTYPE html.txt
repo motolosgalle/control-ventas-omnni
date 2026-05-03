@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omni Dashboard Pro | Gestión de Ventas</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-body: #f8fafc;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: #1e293b; transition: all 0.3s ease; }
+        
+        /* Animaciones */
+        .fade-in { animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Estilo Material / Cards */
+        .card { border: none; border-radius: 12px; box-shadow: var(--card-shadow); margin-bottom: 1.5rem; overflow: hidden; }
+        .card-header { background: white; border-bottom: 1px solid #f1f5f9; font-weight: 600; padding: 1.25rem; }
+
+        /* Inputs Estilizados */
+        .form-control:focus { box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); border-color: var(--primary); }
+        .table-input { border: 1px solid transparent; padding: 4px 8px; border-radius: 4px; transition: 0.2s; width: 100px; text-align: right; }
+        .table-input:hover { border-color: #e2e8f0; background: #f8fafc; }
+
+        /* Navegación */
+        .nav-pills .nav-link { color: var(--secondary); font-weight: 500; padding: 0.75rem 1.5rem; transition: 0.3s; }
+        .nav-pills .nav-link.active { background-color: var(--primary); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
+        .nav-link i { margin-right: 8px; }
+
+        /* Badge Custom */
+        .badge-delta { font-size: 0.75rem; padding: 4px 8px; border-radius: 20px; }
+
+        /* Gráficos */
+        .chart-container { position: relative; height: 300px; width: 100%; }
+
+        /* Efecto Hover en Tablas */
+        .table-hover tbody tr:hover { background-color: #f1f5f9; cursor: default; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid py-4">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0"><i data-lucide="layout-dashboard" class="me-2"></i>Omni Sales Pro</h1>
+            <p class="text-muted small mb-0" id="current-view-title">Dashboard Operativo</p>
+        </div>
+        <div class="d-flex gap-3">
+            <input type="month" id="global-month" class="form-control form-control-sm" value="2026-05" onchange="initApp()">
+        </div>
+    </header>
+
+    <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" onclick="switchTab('carga')"><i data-lucide="plus-circle"></i>Carga Diaria</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" onclick="switchTab('dashboard')"><i data-lucide="bar-chart-3"></i>Estadísticas Mensuales</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" onclick="switchTab('config')"><i data-lucide="settings"></i>Configurar Objetivos</button>
+        </li>
+    </ul>
+
+    <div id="view-carga" class="tab-view fade-in">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Registro de Métodos de Pago</span>
+                        <div class="d-flex gap-2">
+                            <select id="sucursal-select" class="form-select form-select-sm" style="width: 150px;">
+                                <option value="Aldrey">Paseo Aldrey</option>
+                                <option value="Gallegos">Los Gallegos</option>
+                            </select>
+                            <input type="date" id="fecha-select" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Método</th>
+                                        <th class="text-end">Monto ($)</th>
+                                        <th>Método</th>
+                                        <th class="text-end">Monto ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-warning text-dark me-2">EF</span> Efectivo</td>
+                                        <td><input type="number" class="table-input" id="inp-efectivo" value="0"></td>
+                                        <td><span class="badge bg-primary me-2">VI</span> Visa</td>
+                                        <td><input type="number" class="table-input card-val" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-primary me-2">MC</span> Mastercard</td>
+                                        <td><input type="number" class="table-input card-val" value="0"></td>
+                                        <td><span class="badge bg-info me-2">MP</span> Mercado Pago</td>
+                                        <td><input type="number" class="table-input card-val" value="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-danger me-2">OM</span> Omni / Moto Care</td>
+                                        <td><input type="number" class="table-input card-val" value="0"></td>
+                                        <td><span class="badge bg-secondary me-2">TR</span> Trade In</td>
+                                        <td><input type="number" class="table-input card-val" value="0"></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="3">TOTAL CAJA DEL DÍA</td>
+                                        <td class="text-end text-primary h5" id="val-total-dia">$ 0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header"><i data-lucide="package" class="me-2"></i>Unidades y Vendedor</div>
+                    <div class="card-body">
+                        <label class="form-label">Especialista Responsable</label>
+                        <select id="vendedor-select" class="form-select mb-3">
+                            </select>
+                        
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="small text-muted">Facturas</label>
+                                <input type="number" id="inp-facturas" class="form-control" value="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted">Celulares</label>
+                                <input type="number" id="inp-cels" class="form-control" value="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted">Accesorios</label>
+                                <input type="number" id="inp-acces" class="form-control" value="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted">Protección</label>
+                                <input type="number" id="inp-hidro" class="form-control" value="0">
+                            </div>
+                        </div>
+                        <hr>
+                        <button class="btn btn-primary w-100 py-2 shadow-sm" onclick="saveDailyEntry()">
+                            <i data-lucide="save" class="me-2"></i>Guardar Jornada
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-dashboard" class="tab-view fade-in" style="display: none;">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card p-3 bg-primary text-white">
+                    <small class="opacity-75">Ventas Totales Mes</small>
+                    <h2 class="fw-bold mb-0" id="stat-total-money">$ 0</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <small class="text-muted">Total Unidades</small>
+                    <h2 class="fw-bold mb-0" id="stat-total-unid">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <small class="text-muted">Ticket Promedio</small>
+                    <h2 class="fw-bold mb-0" id="stat-ticket-avg">$ 0</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <small class="text-muted">Conversión Prod/Fact</small>
+                    <h2 class="fw-bold mb-0" id="stat-prod-fact">0.0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="card-header">Rendimiento por Especialista</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="table-performance">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Vendedor</th>
+                                        <th class="text-end">Ventas ($)</th>
+                                        <th class="text-end">Unid.</th>
+                                        <th>Progreso Objetivo</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header">Distribución de Ventas</div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-config" class="tab-view fade-in" style="display: none;">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">Objetivos por Sucursal</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="fw-bold">Aldrey - Meta Pesos</label>
+                            <input type="number" id="obj-aldrey-money" class="form-control mb-2" onchange="saveObjectives()">
+                            <label class="fw-bold">Aldrey - Meta Unidades</label>
+                            <input type="number" id="obj-aldrey-unid" class="form-control" onchange="saveObjectives()">
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <label class="fw-bold">Gallegos - Meta Pesos</label>
+                            <input type="number" id="obj-gallegos-money" class="form-control mb-2" onchange="saveObjectives()">
+                            <label class="fw-bold">Gallegos - Meta Unidades</label>
+                            <input type="number" id="obj-gallegos-unid" class="form-control" onchange="saveObjectives()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">Configurar Vendedores</div>
+                    <div class="card-body">
+                        <div id="vendedores-list">
+                            </div>
+                        <div class="input-group mt-3">
+                            <input type="text" id="new-vendedor-name" class="form-control" placeholder="Nombre nuevo vendedor">
+                            <button class="btn btn-outline-primary" onclick="addVendedor()">Agregar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ESTADO INICIAL ---
+    let db = JSON.parse(localStorage.getItem('omni_v3_db')) || {
+        registros: [],
+        vendedores: ["Martina Pons", "Juan Ignacio Pardo", "Helena Baridon", "Lucas Mongou", "German Estevez"],
+        objetivos: {
+            aldrey: { money: 85000000, unid: 225 },
+            gallegos: { money: 70000000, unid: 195 },
+            personales: {}
+        }
+    };
+
+    let salesChart = null;
+
+    // --- INICIALIZACIÓN ---
+    function initApp() {
+        lucide.createIcons();
+        document.getElementById('fecha-select').valueAsDate = new Date();
+        renderVendedores();
+        updateCalculosCarga();
+        if(document.getElementById('view-dashboard').style.display !== 'none') renderDashboard();
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-view').forEach(v => v.style.display = 'none');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        
+        document.getElementById('view-' + tab).style.display = 'block';
+        event.currentTarget.classList.add('active');
+        
+        if(tab === 'dashboard') renderDashboard();
+        if(tab === 'config') renderConfig();
+    }
+
+    // --- CARGA DIARIA ---
+    document.querySelectorAll('.table-input').forEach(inp => {
+        inp.addEventListener('input', updateCalculosCarga);
+    });
+
+    function updateCalculosCarga() {
+        let total = 0;
+        let efectivo = parseFloat(document.getElementById('inp-efectivo').value) || 0;
+        let tarjetas = 0;
+        document.querySelectorAll('.card-val').forEach(c => tarjetas += (parseFloat(c.value) || 0));
+        
+        total = efectivo + tarjetas;
+        document.getElementById('val-total-dia').innerText = `$ ${total.toLocaleString()}`;
+    }
+
+    function saveDailyEntry() {
+        const entry = {
+            id: Date.now(),
+            fecha: document.getElementById('fecha-select').value,
+            sucursal: document.getElementById('sucursal-select').value,
+            vendedor: document.getElementById('vendedor-select').value,
+            monto: parseFloat(document.getElementById('val-total-dia').innerText.replace('$ ','').replace(/,/g,'')),
+            facturas: parseInt(document.getElementById('inp-facturas').value) || 0,
+            cels: parseInt(document.getElementById('inp-cels').value) || 0,
+            acces: parseInt(document.getElementById('inp-acces').value) || 0,
+            hidro: parseInt(document.getElementById('inp-hidro').value) || 0
+        };
+
+        db.registros.push(entry);
+        localStorage.setItem('omni_v3_db', JSON.stringify(db));
+        alert("✅ Datos guardados correctamente");
+        resetForm();
+    }
+
+    function resetForm() {
+        document.querySelectorAll('input[type="number"]').forEach(i => i.value = 0);
+        updateCalculosCarga();
+    }
+
+    // --- DASHBOARD ---
+    function renderDashboard() {
+        const mes = document.getElementById('global-month').value;
+        const filtrados = db.registros.filter(r => r.fecha.startsWith(mes));
+        
+        let tMoney = 0, tUnid = 0, tFact = 0;
+        let vendStats = {};
+
+        // Inicializar vendedores
+        db.vendedores.forEach(v => vendStats[v] = { money: 0, unid: 0 });
+
+        filtrados.forEach(r => {
+            tMoney += r.monto;
+            tUnid += (r.cels + r.acces + r.hidro);
+            tFact += r.facturas;
+            if(vendStats[r.vendedor]) {
+                vendStats[r.vendedor].money += r.monto;
+                vendStats[r.vendedor].unid += (r.cels + r.acces + r.hidro);
+            }
+        });
+
+        // Actualizar Widgets
+        document.getElementById('stat-total-money').innerText = `$ ${tMoney.toLocaleString()}`;
+        document.getElementById('stat-total-unid').innerText = tUnid;
+        document.getElementById('stat-ticket-avg').innerText = tFact > 0 ? `$ ${(tMoney/tFact).toLocaleString(undefined, {maximumFractionDigits:0})}` : "$ 0";
+        document.getElementById('stat-prod-fact').innerText = tFact > 0 ? (tUnid/tFact).toFixed(1) : "0.0";
+
+        // Tabla Vendedores
+        const tbody = document.querySelector('#table-performance tbody');
+        tbody.innerHTML = '';
+        Object.keys(vendStats).forEach(name => {
+            const data = vendStats[name];
+            const metaPersonal = db.objetivos.personales[name] || 5000000;
+            const porc = Math.min((data.money / metaPersonal) * 100, 100).toFixed(0);
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${name}</td>
+                    <td class="text-end">$ ${data.money.toLocaleString()}</td>
+                    <td class="text-end">${data.unid}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div class="progress-bar bg-primary" style="width: ${porc}%"></div>
+                            </div>
+                            <small class="fw-bold">${porc}%</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        renderChart(filtrados);
+    }
+
+    function renderChart(data) {
+        if(salesChart) salesChart.destroy();
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        const sucursales = {
+            Aldrey: data.filter(r => r.sucursal === 'Aldrey').reduce((a, b) => a + b.monto, 0),
+            Gallegos: data.filter(r => r.sucursal === 'Gallegos').reduce((a, b) => a + b.monto, 0)
+        };
+
+        salesChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Aldrey', 'Gallegos'],
+                datasets: [{
+                    data: [sucursales.Aldrey, sucursales.Gallegos],
+                    backgroundColor: ['#4f46e5', '#10b981'],
+                    hoverOffset: 10
+                }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // --- CONFIGURACIÓN ---
+    function renderConfig() {
+        document.getElementById('obj-aldrey-money').value = db.objetivos.aldrey.money;
+        document.getElementById('obj-aldrey-unid').value = db.objetivos.aldrey.unid;
+        document.getElementById('obj-gallegos-money').value = db.objetivos.gallegos.money;
+        document.getElementById('obj-gallegos-unid').value = db.objetivos.gallegos.unid;
+
+        const container = document.getElementById('vendedores-list');
+        container.innerHTML = '';
+        db.vendedores.forEach(v => {
+            container.innerHTML += `
+                <div class="d-flex gap-2 mb-2">
+                    <input type="text" class="form-control form-control-sm" value="${v}" disabled>
+                    <input type="number" class="form-control form-control-sm" placeholder="Meta $" 
+                           value="${db.objetivos.personales[v] || ''}" 
+                           onchange="updateMetaPersonal('${v}', this.value)">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeVendedor('${v}')">×</button>
+                </div>
+            `;
+        });
+    }
+
+    function saveObjectives() {
+        db.objetivos.aldrey.money = parseFloat(document.getElementById('obj-aldrey-money').value);
+        db.objetivos.aldrey.unid = parseInt(document.getElementById('obj-aldrey-unid').value);
+        db.objetivos.gallegos.money = parseFloat(document.getElementById('obj-gallegos-money').value);
+        db.objetivos.gallegos.unid = parseInt(document.getElementById('obj-gallegos-unid').value);
+        localStorage.setItem('omni_v3_db', JSON.stringify(db));
+    }
+
+    function updateMetaPersonal(name, value) {
+        db.objetivos.personales[name] = parseFloat(value);
+        localStorage.setItem('omni_v3_db', JSON.stringify(db));
+    }
+
+    function addVendedor() {
+        const name = document.getElementById('new-vendedor-name').value;
+        if(name && !db.vendedores.includes(name)) {
+            db.vendedores.push(name);
+            localStorage.setItem('omni_v3_db', JSON.stringify(db));
+            renderConfig();
+            renderVendedores();
+            document.getElementById('new-vendedor-name').value = '';
+        }
+    }
+
+    function renderVendedores() {
+        const sel = document.getElementById('vendedor-select');
+        sel.innerHTML = db.vendedores.map(v => `<option value="${v}">${v}</option>`).join('');
+    }
+
+    // Inicializar al cargar
+    window.onload = initApp;
+</script>
+
+</body>
+</html>
